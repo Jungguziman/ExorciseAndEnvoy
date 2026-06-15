@@ -1,0 +1,16 @@
+Binaries/
+Build/
+DerivedDataCache/
+Intermediate/
+Saved/
+.vs/
+*.sln
+*.suo
+*.xsd
+*.user
+*.userosscache
+*.sln.docstates
+ExecutionHistory/
+*.log
+.DS_Store
+Thumbs.db
