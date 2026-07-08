@@ -4,71 +4,87 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "InputActionValue.h"
-#include "SkillBase.h"
+
+#include "AnimCallback.h"
+
 #include "Exorcist.generated.h"
 
 class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
-class ASkillBase;
+class USkillManager;
+class UStatusAttribute;
+class UAnimInstance;
+class UAnimInstanceBase_Exorcist;
+class AExorcistController;
 
 UCLASS(Blueprintable)
-class EXORCISEANDENVOY_API AExorcist : public ACharacter
+class EXORCISEANDENVOY_API AExorcist : public ACharacter, public IAnimCallback
 {
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
 	AExorcist();
 
 public:	
-	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	
+
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	virtual void PossessedBy(AController* NewController) override;
 
+	// 인풋액션 -> 애니메이션
 	void Move(const FInputActionValue& Value);
-	void Attack(const FInputActionValue& Value);
-	void Skill_Q(const FInputActionValue& Value);
-	void Skill_E(const FInputActionValue& Value);
-	void Skill_R(const FInputActionValue& Value);
+	void Attack();
+	void Casting(FGameplayTag Input);
 
-	UFUNCTION(BlueprintCallable, CallInEditor, Category = "Debug | Test")
+	void ReleaseInput(FGameplayTag Input);
+
+	// 회전 처리
+	void FollowingCursor(float DeltaTime = 15.f);
+
+public:
+	// 디버그용 함수
+	UFUNCTION(BlueprintCallable, CallInEditor, Category = "Debug")
 	void DebugApplyChanges();
 
-protected:
+	// 애니메이션 -> 실제 스킬 사용 | 순수가상함수 구현
+	virtual void BeginCast(FGameplayTag Input);
+	virtual void EndCast(FGameplayTag Input);
+
+	virtual void GetMovementAnimData(float& OutSpeed, float& OutDirection, bool& OutIsDead);
+
+protected: // 블루프린트에서 연결할 것들
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USpringArmComponent> CameraBoom;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCameraComponent> TopDownCamera;
 
-	/** WASD 이동 입력 액션 (IA_Move) */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Attach|InputAction", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> MoveAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UInputAction> AttackAction;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attach|InputAction")
+	TMap<FGameplayTag, TObjectPtr<UInputAction>> CastActions;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UInputAction> SkillQ_Action;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attach|InputAction")
+	TObjectPtr<UInputAction> ShowSkillRangeAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UInputAction> SkillE_Action;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attach|InputAction")
+	TObjectPtr<UInputAction> ReleaseSkillAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UInputAction> SkillR_Action;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation")
+	TObjectPtr<UAnimInstanceBase_Exorcist> AnimInstance;
 
-protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attach|Animation")
+	TMap<FGameplayTag, TObjectPtr<UAnimMontage>> CastMontages;
+
+
+protected: // 캐릭터 카메라 구조
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Setup|Camera")
 	float DefaultArmLength;
 
@@ -81,40 +97,32 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Setup|Camera")
 	FVector DefaultCameraPosition;
 
-protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character State")
+protected: // 액터 컴포넌트
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components|SkillManager")
+	TObjectPtr<USkillManager> SkillManager;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components|StatusAttribute")
+	TObjectPtr<UStatusAttribute> StatusAttribute;
+
+	UPROPERTY()
+	TObjectPtr<AExorcistController> PC;
+
+protected: // 캐릭터 상태
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
 	FGameplayTagContainer State;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
-	int Level = 1;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
-	float MaxHP = 100.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
-	float HP = 100.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
-	float HPRegen = 5.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
-	float MaxMP = 300.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
-	float MP = 300.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
-	float MPRegen = 3.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
-	float maxSpeed = 0.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
-	float speed = 0.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
-	float SpeedRatio = 100.0f;
-
 	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Casting")
+	TMap<FGameplayTag, bool> IsCastings;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Debug")
+	FGameplayTag CurrentInput;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Debug")
+	FGameplayTag CurrentAimingInput;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Debug")
+	bool bShowSkillRange = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Debug")
+	bool bReleaseSkill = false;
 
 };

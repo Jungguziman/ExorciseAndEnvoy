@@ -1,43 +1,43 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Exorcist.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Camera/CameraComponent.h"
 
+#include "AnimInstanceBase_Exorcist.h"
+#include "ExorcistController.h"
+#include "SkillManager.h"
+#include "StatusAttribute.h"
+#include "TargetIndicator.h"
 
 // Sets default values
 AExorcist::AExorcist()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	// --- 1. ÀÚ½ÄµéÀÌ º¯°æÇÏ±â ½¬¿î ±âº»°ª ¼³Á¤ º¯¼ö ÃÊ±âÈ­ ---
-	DefaultArmLength = 1000.f;
-	DefaultCameraRotation = FRotator(-30.f, 0.f, 0.f);
-	DefaultCameraPosition = FVector(0.0f, 0.0f, 300.0f);
+	DefaultArmLength = 650.f;
+	DefaultCameraRotation = FRotator(-50.f, 0.f, 0.f);
+	DefaultCameraPosition = FVector(0.0f, 0.0f, 600.0f);
 	DefaultRotationRate = FRotator(0.f, 640.f, 0.f);
 
-	// --- 2. ·Ñ ½ºÅ¸ÀÏ ±âº» È¸Àü ±ÔÄ¢ Àá±İ ---
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
 	bUseControllerRotationYaw = false;
 
-	// --- 3. ÀÌµ¿ ÄÄÆ÷³ÍÆ® ±âº» ¼¼ÆÃ ---
-	GetCharacterMovement()->MaxWalkSpeed = 400.0f;
-	GetCharacterMovement()->bOrientRotationToMovement = true;
-	GetCharacterMovement()->RotationRate = DefaultRotationRate; // º¯¼ö ´ëÀÔ
+	GetCharacterMovement()->RotationRate = DefaultRotationRate;
 	GetCharacterMovement()->bConstrainToPlane = true;
 	GetCharacterMovement()->bSnapToPlaneAtStart = true;
-	
+	GetCharacterMovement()->bOrientRotationToMovement = false;
 
-	// --- 4. Ä«¸Ş¶ó ºÕ ¹× Ä«¸Ş¶ó Á¶¸³ ---
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->SetUsingAbsoluteRotation(true);
-	CameraBoom->TargetArmLength = DefaultArmLength;       // º¯¼ö ´ëÀÔ
-	CameraBoom->SetRelativeRotation(DefaultCameraRotation); // º¯¼ö ´ëÀÔ
+	CameraBoom->TargetArmLength = DefaultArmLength;       
+	CameraBoom->SetRelativeRotation(DefaultCameraRotation); 
 	CameraBoom->SetRelativeLocation(DefaultCameraPosition);
 	CameraBoom->bDoCollisionTest = false;
 
@@ -45,96 +45,287 @@ AExorcist::AExorcist()
 	TopDownCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	TopDownCamera->bUsePawnControlRotation = false;
 	
-	State.AddTag(FGameplayTag::RequestGameplayTag(TEXT("State.Exorcist.Idle")));
+	GetCapsuleComponent()->SetCapsuleHalfHeight(100.0f);
+	GetCapsuleComponent()->SetCapsuleRadius(35.f);
+
+	GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, -100.f));
+	GetMesh()->SetRelativeRotation(FRotator(0.f, 0.f, -90.f));
+
+	SkillManager = CreateDefaultSubobject<USkillManager>(TEXT("SkillManager"));
+	StatusAttribute = CreateDefaultSubobject<UStatusAttribute>(TEXT("StatusAttribute"));
+
+	// Set StatusAttribute At Derived Classes
+
+	StatusAttribute->SetMaxSpeed(500.0f);
+
+	IsCastings.Add(Tags::Input_A, false);
+	IsCastings.Add(Tags::Input_Q, false);
+	IsCastings.Add(Tags::Input_E, false);
+	IsCastings.Add(Tags::Input_R, false);
 }
 
-// Called when the game starts or when spawned
 void AExorcist::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	if (GetMesh())
+		AnimInstance = Cast<UAnimInstanceBase_Exorcist>(GetMesh()->GetAnimInstance());
+	else
+		UE_LOG(LogTemp, Warning, TEXT("AnimInstance Not Selected"));
+
+	if (!StatusAttribute)
+		UKismetSystemLibrary::QuitGame(GetWorld(), GetWorld()->GetFirstPlayerController(), EQuitPreference::Quit, false);
+
+	State.AddTag(Tags::Exorcist_Idle);
 }
 
 void AExorcist::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 
+	PC = Cast<AExorcistController>(GetController());
+
+	if (!PC)
+		UKismetSystemLibrary::QuitGame(GetWorld(), GetWorld()->GetFirstPlayerController(), EQuitPreference::Quit, false);
 }
 
-void AExorcist::Move(const FInputActionValue& Value)
-{
-	// WASD ÀÔ·Â°ª (X: ÁÂ¿ì ÀÌµ¿ A/D, Y: ÀüÈÄ ÀÌµ¿ W/S) º¤ÅÍ ÃßÃâ
-	FVector2D MovementVector = Value.Get<FVector2D>();
-
-	State.AddTag(FGameplayTag::RequestGameplayTag(TEXT("State.Exorcist.Idle")));
-
-	if (Controller != nullptr)
-	{
-		// ÄÁÆ®·Ñ·¯³ª Ä«¸Ş¶ó°¡ ¹Ù¶óº¸´Â È¸Àü°ª Áß ¼öÆò(Yaw) ¹æÇâ¸¸ ÃßÃâ
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
-
-		// ·Ñ ½ÃÁ¡ ±âÁØÀ¸·Î È­¸é À§ÂÊ(Á¤ºÏÇâ) º¤ÅÍ °è»ê
-		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-
-		// ·Ñ ½ÃÁ¡ ±âÁØÀ¸·Î È­¸é ¿À¸¥ÂÊ(Á¤µ¿Çâ) º¤ÅÍ °è»ê
-		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-
-		// °è»êµÈ Àı´ë ¹æÇâ º¤ÅÍ¿¡ Å°º¸µå ÀÔ·Â °¡ÁßÄ¡¸¸Å­ ÀÌµ¿ ¸í·É Àü´Ş
-		AddMovementInput(ForwardDirection, MovementVector.Y);
-		AddMovementInput(RightDirection, MovementVector.X);
-
-	}
-}
-
-void AExorcist::Attack(const FInputActionValue& Value)
-{
-	auto idle = FGameplayTag::RequestGameplayTag(TEXT("State.Exorcist.Idle"));
-	auto casting = FGameplayTag::RequestGameplayTag(TEXT("State.Exorcist.Casting"));
-
-	if (State.HasTag(casting))
-		return;
-	
-	State.RemoveTag(idle);
-	State.AddTag(casting);
-
-	// ¾Ö´Ô ³ëÆ¼ÆÄÀÌ ( ¾îÄÉ ÇÏ´Â Áö ¾Ë·ÁÁÖ»ï )
-
-	// Çì´õ¿¡ ÀÖ´Â Skill¿¡¼­ CastSpell ÇÔ¼ö È£Ãâ ( Skill TObjPtr ·Î ÀúÀåÇØ ³õ´Â°Å ¸Â´ÂÁö ±Ã±İ )
-	// ¤¤ ³ª¸ÓÁö ½ºÅ³ ÀÛµ¿Àº ½ºÅ³ ¿¡¼­ ¿¬»ê
-
-	// ³» Ä³¸¯ÅÍ ¸¶³ª °¨¼Ò
-	// 1¹øÂ° ½ºÅ³Ä­ ½ºÅ³ ÄğÅ¸ÀÓ µ¹¸®±â (ÀÌ ÄğÅ¸ÀÓÀº AExorcist ¿¡¼­ °è»êÇÏ´Â°Å ¸Â°ÚÁö)
-
-}
-
-void AExorcist::Skill_Q(const FInputActionValue& Value)
-{
-}
-
-void AExorcist::Skill_E(const FInputActionValue& Value)
-{
-}
-
-void AExorcist::Skill_R(const FInputActionValue& Value)
-{
-}
-
-void AExorcist::DebugApplyChanges()
-{
-	GetCharacterMovement()->MaxWalkSpeed = maxSpeed;
-}
-
-
-// Called every frame
 void AExorcist::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	speed = GetVelocity().Length();
+	//if (!State.HasTag(Tags::Exorcist_Casting))
+		FollowingCursor(DeltaTime);
+
+	StatusAttribute->SetSpeed(GetVelocity().Length());
 }
 
-// Called to bind functionality to input
+void AExorcist::Move(const FInputActionValue& Value)
+{
+	if (StatusAttribute->GetDeBuffs().HasTag(Tags::Block) ||		// ê°•ë ¥ CC ì‹œ ì´ë™ ë¶ˆê°€
+		StatusAttribute->GetDeBuffs().HasTag(Tags::Debuff_Root))	// ì†ë°• ì‹œ ì´ë™ ë¶ˆê°€
+		return;
+
+
+	State.RemoveTag(Tags::Exorcist_Idle);
+	State.AddTag(Tags::Exorcist_Moving);
+
+	FVector2D MovementVector = Value.Get<FVector2D>();
+
+	float speed = StatusAttribute->GetFinalMaxSpeed();
+
+	if (StatusAttribute->GetDeBuffs().HasTag(Tags::Debuff_Slow))
+	{
+		speed *= StatusAttribute->GetActiveEffect().Find(Tags::Debuff_Slow)->Value / 100.0f;
+	}
+
+	if (AnimInstance->IsAnyMontagePlaying())
+	{
+		speed *= 0.75f;
+		GetCharacterMovement()->ForceReplicationUpdate();
+	}
+
+	GetCharacterMovement()->MaxWalkSpeed = speed;
+
+	if (Controller != nullptr)
+	{
+		// ì»¨íŠ¸ë¡¤ëŸ¬ë‚˜ ì¹´ë©”ë¼ê°€ ë°”ë¼ë³´ëŠ” íšŒì „ê°’ ì¤‘ ìˆ˜í‰(Yaw) ë°©í–¥ë§Œ ì¶”ì¶œ
+		const FRotator YawRotation(0, Controller->GetControlRotation().Yaw, 0);
+
+		// ë¡¤ ì‹œì  ê¸°ì¤€ìœ¼ë¡œ í™”ë©´ ìœ„ìª½(ì •ë¶í–¥) ë²¡í„° ê³„ì‚°
+		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+
+		// ë¡¤ ì‹œì  ê¸°ì¤€ìœ¼ë¡œ í™”ë©´ ì˜¤ë¥¸ìª½(ì •ë™í–¥) ë²¡í„° ê³„ì‚°
+		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
+		// ê³„ì‚°ëœ ì ˆëŒ€ ë°©í–¥ ë²¡í„°ì— í‚¤ë³´ë“œ ì…ë ¥ ê°€ì¤‘ì¹˜ë§Œí¼ ì´ë™ ëª…ë ¹ ì „ë‹¬
+		AddMovementInput(ForwardDirection, MovementVector.Y);
+		AddMovementInput(RightDirection, MovementVector.X);
+	}
+}
+
+void AExorcist::Attack()
+{
+	//if (PC->)
+	bShowSkillRange = false;
+	PC->HideSkillRange();
+	CurrentAimingInput = FGameplayTag::EmptyTag;
+	CurrentInput = FGameplayTag::EmptyTag;
+
+	if (!PC->GetLockedTarget())
+		return;
+
+	if (State.HasTag(Tags::Exorcist_Casting)) // ìŠ¤í‚¬ ì‹œì „ì¤‘ ê¸°ë³¸ê³µê²© ë¶ˆê°€
+		return;
+
+	if (StatusAttribute->GetDeBuffs().HasTag(Tags::Block)) // ê°•ë ¥ CC ì‹œ ê¸°ë³¸ê³µê²©ë¶ˆê°€
+		return;
+	
+	if (AnimInstance->IsAnyMontagePlaying())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Montage Playing"));
+	}
+
+	if (!AnimInstance->IsAnyMontagePlaying() && !IsCastings[Tags::Input_A])
+	{
+		State.RemoveTag(Tags::Exorcist_Idle);
+		State.AddTag(Tags::Exorcist_Casting);
+
+		CurrentInput = Tags::Input_A;
+		IsCastings[Tags::Input_A] = true;
+
+		AnimInstance->Montage_Play(CastMontages[Tags::Input_A], 1.38f * StatusAttribute->GetFinalAttackSpeed());
+	}
+}
+
+void AExorcist::Casting(FGameplayTag Input)
+{
+	UE_LOG(LogTemp, Error, TEXT("%s"), *Input.ToString());
+
+	if (Input.MatchesTagExact(Tags::Input_A))
+	{
+		Attack();
+		
+		return;
+	}
+
+	if (StatusAttribute->GetDeBuffs().HasTag(Tags::Block) ||
+		StatusAttribute->GetDeBuffs().HasTag(Tags::Debuff_Silence))
+		return;
+
+	TObjectPtr<USkillBase> Skill = SkillManager->GetSkill(Input);
+	if (!Skill) return;
+
+	// [ìˆ˜ì •] Shiftë¥¼ ëˆ„ë¥¸ ì±„ ìŠ¤í‚¬ í‚¤ë¥¼ ëˆ„ë¥¸ ê²½ìš° -> ì‚¬ê±°ë¦¬ í‘œì‹œ ëª¨ë“œ ëŒì…
+	if (bShowSkillRange)
+	{
+		CurrentAimingInput = Input; // í˜„ì¬ ì¡°ì¤€ ì¤‘ì¸ ìŠ¤í‚¬ ê¸°ì–µ
+		PC->ShowSkillRange(Skill);
+		return;
+	}
+
+	// [ìˆ˜ì •] ì¼ë°˜ ì‹œì „ (Shift ì—†ì´ ê·¸ëƒ¥ ëˆ„ë¥¸ ê²½ìš°) -> ì¦‰ì‹œ ì‹œì „
+	//bool IsAttacking = CurrentInput.MatchesTagExact(Tags::Input_A);
+
+	if (!State.HasTag(Tags::Exorcist_Casting) || IsCastings[Tags::Input_A])
+	{
+		if (IsCastings[Tags::Input_A])
+		{
+			EndCast(Tags::Input_A);
+		}
+
+		State.RemoveTag(Tags::Exorcist_Idle);
+		State.AddTag(Tags::Exorcist_Casting);
+
+		CurrentInput = Input;
+		SkillManager->SetSkillCastLocation(PC->GetIndicator()->GetActorLocation());
+		//IsCastings[Input] = true;
+
+		AnimInstance->Montage_Play(CastMontages[Input]);
+	}
+	else if (State.HasTag(Tags::Exorcist_Casting))
+	{
+		for (auto Casts : IsCastings)
+		{
+			if (Casts.Value)
+			{
+				UE_LOG(LogTemp, Error, TEXT("ìº”ìŠ¬ ì„±ê³µ : %s -> %s"), *Casts.Key.ToString(), *Input.ToString());
+				EndCast(Casts.Key);
+
+				State.RemoveTag(Tags::Exorcist_Idle);
+				State.AddTag(Tags::Exorcist_Casting);
+
+				CurrentInput = Input;
+				SkillManager->SetSkillCastLocation(PC->GetIndicator()->GetActorLocation());
+				//IsCastings[Input] = true;
+
+				AnimInstance->Montage_Play(CastMontages[Input]);
+			}
+		}
+
+		
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("ì„ ë”œ ì‹œì‘ : %s"), *Input.ToString());
+}
+
+void AExorcist::ReleaseInput(FGameplayTag Input)
+{
+	PC->HideSkillRange(); // ì‚¬ê±°ë¦¬ ë„ê¸°
+	bShowSkillRange = false; // í”Œë˜ê·¸ ì´ˆê¸°í™”
+	
+	if (Input.MatchesTagExact(Tags::Input_A))
+	{
+		Attack();
+	}
+	// ë§Œì•½ ì´ ìŠ¤í‚¬ë¡œ ì‚¬ê±°ë¦¬ë¥¼ ì¡°ì¤€ ì¤‘ì´ì—ˆë‹¤ë©´ í‚¤ë¥¼ ë—„ ë•Œ ë°œì‚¬
+	else if (CurrentAimingInput.MatchesTagExact(Input))
+	{
+		Casting(Input);
+	}
+	else if (CurrentAimingInput.IsValid())
+	{
+		Casting(CurrentAimingInput);
+	}
+
+	CurrentAimingInput = FGameplayTag::EmptyTag;
+}
+
+void AExorcist::FollowingCursor(float DeltaTime)
+{
+	FVector TargetLocation = PC->GetIndicator()->GetActorLocation();
+	FVector StartLocation = GetActorLocation();
+	TargetLocation.Z = StartLocation.Z;
+	FRotator TargetRotation = UKismetMathLibrary::FindLookAtRotation(StartLocation, TargetLocation);
+
+	FRotator NewRotation = FMath::RInterpTo(GetActorRotation(), TargetRotation, DeltaTime, 15.0f);
+
+	SetActorRotation(NewRotation);
+}
+
+void AExorcist::DebugApplyChanges()
+{
+	StatusAttribute->SetMaxSpeed(GetCharacterMovement()->MaxWalkSpeed);
+}
+
+void AExorcist::BeginCast(FGameplayTag Input)
+{
+	UE_LOG(LogTemp, Warning, TEXT("ì„ ë”œ ë : %s"), *Input.ToString());
+
+	UE_LOG(LogTemp, Warning, TEXT("ë°œì‚¬ : %s"), *Input.ToString());
+	SkillManager->TryCast(Input);
+	UE_LOG(LogTemp, Warning, TEXT("ë°œì‚¬ ì™„ë£Œ : %s"), *Input.ToString());
+
+	UE_LOG(LogTemp, Warning, TEXT("í›„ë”œ ì‹œì‘ : %s"), *Input.ToString());
+	
+	IsCastings[Input] = true;
+}
+
+void AExorcist::EndCast(FGameplayTag Input)
+{
+	UE_LOG(LogTemp, Warning, TEXT("í›„ë”œ ë : %s"), *Input.ToString());
+
+	State.RemoveTag(Tags::Exorcist_Casting);
+	State.AddTag(Tags::Exorcist_Idle);
+
+	if (CurrentInput.MatchesTagExact(Input))
+	{
+	}
+	CurrentInput = FGameplayTag::EmptyTag;
+
+	AnimInstance->Montage_Stop(0.01f);
+
+	IsCastings[Input] = false;
+}
+
+void AExorcist::GetMovementAnimData(float& OutSpeed, float& OutDirection, bool& OutIsDead)
+{
+	FVector Velocity = GetVelocity();
+
+	OutSpeed = StatusAttribute->GetSpeed();
+	OutDirection = UKismetAnimationLibrary::CalculateDirection(Velocity, GetActorRotation());
+	OutIsDead = StatusAttribute->GetHP() <= 0.f ? true : false;
+}
+
 void AExorcist::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
@@ -144,25 +335,57 @@ void AExorcist::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 		if (MoveAction)
 		{
 			EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AExorcist::Move);
+			EnhancedInputComponent->BindActionInstanceLambda(MoveAction, ETriggerEvent::Completed, [this](const FInputActionInstance& I)
+			{
+				State.RemoveTag(Tags::Exorcist_Moving);
+				State.AddTag(Tags::Exorcist_Idle);
+			});
 		}
 
-		if (AttackAction)
+		// [ìˆ˜ì •] ìŠ¤í‚¬ ì…ë ¥ ì´ë²¤íŠ¸ ë¶„ë¦¬ ì²˜ë¦¬
+		for (auto Iter : CastActions)
 		{
-			EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &AExorcist::Attack);
+			if (Iter.Value)
+			{
+				// 1. í‚¤ë¥¼ ëˆ„ë¥´ê³  ìˆì„ ë•Œ (Triggered) -> Casting í•¨ìˆ˜ ë‚´ë¶€ì—ì„œ ì‚¬ê±°ë¦¬ë¥¼ ì¼¤ì§€ ì¦‰ì‹œ ì‹œì „í• ì§€ íŒë‹¨
+				EnhancedInputComponent->BindAction(Iter.Value, ETriggerEvent::Started, this, &AExorcist::Casting, Iter.Key);
+
+				// 2. ìŠ¤í‚¬ í‚¤ì—ì„œ ì†ì„ ë—ì„ ë•Œ (Completed) -> ì‚¬ê±°ë¦¬ í‘œì‹œ ì¤‘ì´ì—ˆë‹¤ë©´ ì¦‰ì‹œ ìŠ¤í‚¬ ì‹œì „!
+				EnhancedInputComponent->BindAction(Iter.Value, ETriggerEvent::Completed, this, &AExorcist::ReleaseInput, Iter.Key);
+			}
 		}
-		if (SkillQ_Action)
+
+		// Shift í‚¤ ì…ë ¥ ì„¤ì •
+		EnhancedInputComponent->BindActionInstanceLambda(ShowSkillRangeAction, ETriggerEvent::Started, [this](const FInputActionInstance& I)
 		{
-			EnhancedInputComponent->BindAction(SkillQ_Action, ETriggerEvent::Triggered, this, &AExorcist::Skill_Q);
-		}
-		if (SkillE_Action)
+			bShowSkillRange = true;
+		});
+		EnhancedInputComponent->BindActionInstanceLambda(ShowSkillRangeAction, ETriggerEvent::Completed, [this](const FInputActionInstance& I)
 		{
-			EnhancedInputComponent->BindAction(SkillE_Action, ETriggerEvent::Triggered, this, &AExorcist::Skill_E);
-		}
-		if (SkillR_Action)
-		{
-			EnhancedInputComponent->BindAction(SkillR_Action, ETriggerEvent::Triggered, this, &AExorcist::Skill_R);
-		}
+			//bCancelSkill = true;
+			// Shiftë¥¼ ë¨¼ì € ë–¼ë²„ë ¸ì„ ë•Œ ì¡°ì¤€ì„  ì œê±° ì²˜ë¦¬
+			//{
+			//	PC->HideSkillRange();
+			//	CurrentAimingInput = FGameplayTag::EmptyTag;
+			//}
+			//else
+			if (!CurrentAimingInput.IsValid())
+				bShowSkillRange = false;
+		});
+
+		// ë§ˆìš°ìŠ¤ ì¢Œí´ë¦­ (ReleaseSkillAction) ì„¤ì •
+		//EnhancedInputComponent->BindActionInstanceLambda(ReleaseSkillAction, ETriggerEvent::Started, [this](const FInputActionInstance& I)
+		//{
+		//	//bShowSkillRange = false;
+		//	//bCancelSkill = true;
+		//	// Shiftë¥¼ ë¨¼ì € ë–¼ë²„ë ¸ì„ ë•Œ ì¡°ì¤€ì„  ì œê±° ì²˜ë¦¬
+		//	//if (CurrentAimingInput.IsValid())
+		//	{
+		//		//PC->HideSkillRange();
+		//		//CurrentAimingInput = FGameplayTag::EmptyTag;
+		//	}
+		//});
+		EnhancedInputComponent->BindAction(ReleaseSkillAction, ETriggerEvent::Started, this, &AExorcist::ReleaseInput, CurrentAimingInput);
 	}
-
 }
 

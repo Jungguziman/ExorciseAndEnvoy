@@ -12,90 +12,56 @@ class UGameplayTagsManager;
 
 namespace Tags
 {
-	inline static FGameplayTag Exorcist_Idle;
-	inline static FGameplayTag Exorcist_Moving;
-	inline static FGameplayTag Exorcist_Casting;
-	inline static FGameplayTag Exorcist_Dead;
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Exorcist_Idle);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Exorcist_Moving);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Exorcist_Casting);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Exorcist_Dead);
 
-	inline static FGameplayTag Enemy_Idle;
-	inline static FGameplayTag Enemy_Following;
-	inline static FGameplayTag Enemy_Attacking;
-	inline static FGameplayTag Enemy_Dead;
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Idle);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Following);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Attacking);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Dead);
 
-	inline static FGameplayTag Buff_Gaurd;
-	inline static FGameplayTag Buff_Heist;
-	inline static FGameplayTag Buff_Shield;
-	inline static FGameplayTag Buff_Tenacity;
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Buff);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Buff_Gaurd);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Buff_Heist);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Buff_Shield);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Buff_Tenacity);
 
-	inline static FGameplayTag DeBuff_Fear;
-	inline static FGameplayTag DeBuff_Knockback;
-	inline static FGameplayTag DeBuff_Silence;
-	inline static FGameplayTag DeBuff_Slow;
-	inline static FGameplayTag DeBuff_Stun;
-	inline static FGameplayTag DeBuff_Taunt;
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Debuff);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Debuff_Fear);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Debuff_Knockback);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Debuff_Root);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Debuff_Silence);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Debuff_Slow);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Debuff_Stun);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Debuff_Taunt);
 
-	inline static FGameplayTag SkillType_Burn;
-	inline static FGameplayTag SkillType_Dark;
-	inline static FGameplayTag SkillType_Electric;
-	inline static FGameplayTag SkillType_Freeze;
-	inline static FGameplayTag SkillType_Light;
-	inline static FGameplayTag SkillType_Plauge;
-	inline static FGameplayTag SkillType_Rock;
-	inline static FGameplayTag SkillType_Wind;
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Block);
 
-	inline static FGameplayTag Stack_Burn;
-	inline static FGameplayTag Stack_Dark;
-	inline static FGameplayTag Stack_Electric;
-	inline static FGameplayTag Stack_Freeze;
-	inline static FGameplayTag Stack_Light;
-	inline static FGameplayTag Stack_Plauge;
-	inline static FGameplayTag Stack_Rock;
-	inline static FGameplayTag Stack_Wind;
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(SkillType_Burn);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(SkillType_Dark);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(SkillType_Electric);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(SkillType_Freeze);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(SkillType_Light);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(SkillType_Plauge);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(SkillType_Rock);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(SkillType_Wind);
 
-	inline static void InitializeNativeTags()
-	{
-		UGameplayTagsManager& Manager = UGameplayTagsManager::Get();
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Stack_Burn);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Stack_Dark);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Stack_Electric);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Stack_Freeze);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Stack_Light);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Stack_Plauge);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Stack_Rock);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Stack_Wind);
 
-		Exorcist_Idle		= Manager.AddNativeGameplayTag(TEXT("State.Exorcist.Idle"));
-		Exorcist_Moving		= Manager.AddNativeGameplayTag(TEXT("State.Exorcist.Moving"));
-		Exorcist_Casting	= Manager.AddNativeGameplayTag(TEXT("State.Exorcist.Casting"));
-		Exorcist_Dead		= Manager.AddNativeGameplayTag(TEXT("State.Exorcist.Dead"));
-
-		Enemy_Idle			= Manager.AddNativeGameplayTag(TEXT("State.Enemy.Idle"));
-		Enemy_Following		= Manager.AddNativeGameplayTag(TEXT("State.Enemy.Following"));
-		Enemy_Attacking		= Manager.AddNativeGameplayTag(TEXT("State.Enemy.Attacking"));
-		Enemy_Dead			= Manager.AddNativeGameplayTag(TEXT("State.Enemy.Dead"));
-
-		Buff_Gaurd			= Manager.AddNativeGameplayTag(TEXT("State.Buff.Gaurd"));
-		Buff_Heist			= Manager.AddNativeGameplayTag(TEXT("State.Buff.Heist"));
-		Buff_Shield			= Manager.AddNativeGameplayTag(TEXT("State.Buff.Shield"));
-		Buff_Tenacity		= Manager.AddNativeGameplayTag(TEXT("State.Buff.Tenacity"));
-
-		DeBuff_Fear			= Manager.AddNativeGameplayTag(TEXT("State.Debuff.Fear"));
-		DeBuff_Knockback	= Manager.AddNativeGameplayTag(TEXT("State.Debuff.Knockback"));
-		DeBuff_Silence		= Manager.AddNativeGameplayTag(TEXT("State.Debuff.Silence"));
-		DeBuff_Slow			= Manager.AddNativeGameplayTag(TEXT("State.Debuff.Slow"));
-		DeBuff_Stun			= Manager.AddNativeGameplayTag(TEXT("State.Debuff.Stun"));
-		DeBuff_Taunt		= Manager.AddNativeGameplayTag(TEXT("State.Debuff.Taunt"));
-
-		SkillType_Burn		= Manager.AddNativeGameplayTag(TEXT("State.SkillType.Burn"));
-		SkillType_Dark		= Manager.AddNativeGameplayTag(TEXT("State.SkillType.Dark"));
-		SkillType_Electric	= Manager.AddNativeGameplayTag(TEXT("State.SkillType.Electric"));
-		SkillType_Freeze	= Manager.AddNativeGameplayTag(TEXT("State.SkillType.Freeze"));
-		SkillType_Light		= Manager.AddNativeGameplayTag(TEXT("State.SkillType.Light"));
-		SkillType_Plauge	= Manager.AddNativeGameplayTag(TEXT("State.SkillType.Plague"));
-		SkillType_Rock		= Manager.AddNativeGameplayTag(TEXT("State.SkillType.Rock"));
-		SkillType_Wind		= Manager.AddNativeGameplayTag(TEXT("State.SkillType.Wind"));
-
-		Stack_Burn			= Manager.AddNativeGameplayTag(TEXT("State.Stack.Burn"));
-		Stack_Dark			= Manager.AddNativeGameplayTag(TEXT("State.Stack.Dark"));
-		Stack_Electric		= Manager.AddNativeGameplayTag(TEXT("State.Stack.Electric"));
-		Stack_Freeze		= Manager.AddNativeGameplayTag(TEXT("State.Stack.Freeze"));
-		Stack_Light			= Manager.AddNativeGameplayTag(TEXT("State.Stack.Light"));
-		Stack_Plauge		= Manager.AddNativeGameplayTag(TEXT("State.Stack.Plague"));
-		Stack_Rock			= Manager.AddNativeGameplayTag(TEXT("State.Stack.Rock"));
-		Stack_Wind			= Manager.AddNativeGameplayTag(TEXT("State.Stack.Wind"));
-	}
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_None);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_A);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Q);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_E);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_R);
 }
 
 /**
@@ -109,11 +75,5 @@ class EXORCISEANDENVOY_API UEAEGameInstance : public UGameInstance
 public:
 	UEAEGameInstance();
 
-	virtual void Init() override
-	{
-		Super::Init();
-
-		Tags::InitializeNativeTags();
-	}
-
+		
 };

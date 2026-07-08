@@ -20,15 +20,20 @@ public class ExorciseAndEnvoy : ModuleRules
 			"UMG",
 			"AIModule",
 			"NavigationSystem",
-			"GameplayTags"
+			"GameplayTags",
+			"Niagara",
+			"AnimGraphRuntime"
 		});
 
 		PublicIncludePaths.AddRange(new string[] {
 			ModuleDirectory,
+			Path.Combine(ModuleDirectory, "Interface"),
+			Path.Combine(ModuleDirectory, "UI"),
             Path.Combine(ModuleDirectory, "Game"), 
             Path.Combine(ModuleDirectory, "Exorcist"), 
             Path.Combine(ModuleDirectory, "Enemy"), 
-            Path.Combine(ModuleDirectory, "Skill")
+            Path.Combine(ModuleDirectory, "Skill"),
+			Path.Combine(ModuleDirectory, "Animation")
         });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {
