@@ -6,7 +6,9 @@
 #include "Components/ActorComponent.h"
 #include "SkillManager.generated.h"
 
+class AExorcist;
 class USkillBase;
+class UAnimInstance;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class EXORCISEANDENVOY_API USkillManager : public UActorComponent
@@ -21,25 +23,46 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
-public:	
-	// Called every frame
+public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-public:
+	void ProcessSkillCast(FGameplayTag Input, bool bShiftPressed);
+	void ProcessSkillRelease(FGameplayTag Input);
+
 	void TryCast(FGameplayTag Input);
 
-	TObjectPtr<USkillBase> GetSkill(FGameplayTag Key) { return Skill_Instances[Key]; }
+	// 선/후딜 제어용 내부 내부 생명주기 제어 함수
+	void BeginCast(FGameplayTag Input);
+	void EndCast(FGameplayTag Input);
+	void ExecuteAttack();
 
-	void SetSkillCastLocation(FVector Location) { NextSkillCastLocation = Location; }
+	// Getter API
+	TObjectPtr<USkillBase> GetSkill(FGameplayTag Input);
+	bool IsSkillInCoolTime(FGameplayTag Input);
+	FORCEINLINE void SetSkillCastLocation(FVector Location) { NextSkillCastLocation = Location; }
+
+	FGameplayTag GetCurrentAimingInput() { return CurrentAimingInput; }
 
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attach")
+	UPROPERTY(EditAnywhere, Category = "Skill | Config")
 	TMap<FGameplayTag, TSubclassOf<USkillBase>> Skill_Classes;
 
 	UPROPERTY()
 	TMap<FGameplayTag, TObjectPtr<USkillBase>> Skill_Instances;
-	
+
 	UPROPERTY()
-	FVector NextSkillCastLocation = FVector::ZeroVector;
+	TObjectPtr<AExorcist> OwnerCharacter;
+
+	UPROPERTY()
+	TObjectPtr<UAnimInstance> OwnerAnimInstance;
+
+private:
+	FGameplayTag CurrentInput = FGameplayTag::EmptyTag;
+	FGameplayTag CurrentAimingInput = FGameplayTag::EmptyTag;
+
+	UPROPERTY()
+	TMap<FGameplayTag, bool> IsCastings;
+
+	FVector NextSkillCastLocation;
 
 };

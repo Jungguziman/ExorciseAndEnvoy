@@ -39,7 +39,7 @@ protected:
 
 	// 인풋액션 -> 애니메이션
 	void Move(const FInputActionValue& Value);
-	void Attack();
+	//void Attack();
 	void Casting(FGameplayTag Input);
 
 	void ReleaseInput(FGameplayTag Input);
@@ -48,7 +48,7 @@ protected:
 	void FollowingCursor(float DeltaTime = 15.f);
 
 public:
-	// 디버그용 함수
+	// DEBUG YONG HAMSU
 	UFUNCTION(BlueprintCallable, CallInEditor, Category = "Debug")
 	void DebugApplyChanges();
 
@@ -57,6 +57,19 @@ public:
 	virtual void EndCast(FGameplayTag Input);
 
 	virtual void GetMovementAnimData(float& OutSpeed, float& OutDirection, bool& OutIsDead);
+
+public:
+	TObjectPtr<USkillManager> GetSkillManager() { return SkillManager; }
+
+	TObjectPtr<AExorcistController> GetExorcistController() { return PC; }
+
+	TObjectPtr<UStatusAttribute> GetStatusAttribute() { return StatusAttribute; }
+
+	void SetShowSkillRange(bool Value) { bShowSkillRange = Value; }
+
+	FGameplayTagContainer GetStateTags() { return State; }
+
+	TObjectPtr<UAnimMontage> GetCastMontage(FGameplayTag Input) { return CastMontages[Input]; }
 
 protected: // 블루프린트에서 연결할 것들
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
@@ -111,18 +124,18 @@ protected: // 캐릭터 상태
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
 	FGameplayTagContainer State;
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Casting")
-	TMap<FGameplayTag, bool> IsCastings;
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Casting")
+	//TMap<FGameplayTag, bool> IsCastings;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Debug")
-	FGameplayTag CurrentInput;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Debug")
-	FGameplayTag CurrentAimingInput;
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Debug")
+	//FGameplayTag CurrentInput;
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Debug")
+	//FGameplayTag CurrentAimingInput;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Debug")
 	bool bShowSkillRange = false;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Debug")
-	bool bReleaseSkill = false;
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Debug")
+	//bool bReleaseSkill = false;
 
 };

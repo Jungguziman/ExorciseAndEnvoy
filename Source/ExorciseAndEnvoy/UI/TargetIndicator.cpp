@@ -32,7 +32,6 @@ ATargetIndicator::ATargetIndicator()
 	SkillRangeDecalComponent = CreateDefaultSubobject<UDecalComponent>(TEXT("SkillRangeDecal"));
 	SkillRangeDecalComponent->SetupAttachment(RootComponent);
 	SkillRangeDecalComponent->SetRelativeRotation(FRotator(-90.f, 0.f, 0.f)); // 바닥을 바라보게 회전
-	//SkillRangeDecal->SetVisibility(false);
 
 	LineEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("LineEffect"));
 	LineEffect->SetupAttachment(RootComponent);
@@ -50,7 +49,7 @@ void ATargetIndicator::BeginPlay()
 {
 	Super::BeginPlay();
 	
-
+	SkillRangeDecalComponent->SetVisibility(false);
 }
 
 // Called every frame
@@ -130,10 +129,8 @@ void ATargetIndicator::Tick(float DeltaTime)
 		SetActorLocation(LastCursorLocation);
 
 		ConeMesh->SetRelativeLocation(FVector(0.f, 0.f, Offset));
-		if (SkillRangeDecalComponent)
-		{
-			SkillRangeDecalComponent->SetWorldLocation(LastCursorLocation);
-		}
+	
+		SkillRangeDecalComponent->SetWorldLocation(LastCursorLocation);
 	}
 	else
 	{
@@ -182,21 +179,16 @@ void ATargetIndicator::Tick(float DeltaTime)
 
 void ATargetIndicator::ShowSkillRange(TObjectPtr<USkillBase> Skill)
 {
-	TObjectPtr<UMaterialInstanceDynamic> Material = ConeMesh->CreateDynamicMaterialInstance(0, ConeMesh->GetMaterial(0));
-
-	Material->SetVectorParameterValue(FName("Color"), FLinearColor::Blue);
-
-	TargetDecal->SetVisibility(false);
 
 	if (!bShowSkillRange)
 	{
-		bShowSkillRange = true;
+		TObjectPtr<UMaterialInstanceDynamic> Material = ConeMesh->CreateDynamicMaterialInstance(0, ConeMesh->GetMaterial(0));
 
-		if (!SkillRangeDecalComponent)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("SkillRangeDecalComponent : Component Init Failed"))
-			return;
-		}
+		Material->SetVectorParameterValue(FName("Color"), FLinearColor::Blue);
+
+		TargetDecal->SetVisibility(false);
+
+		bShowSkillRange = true;
 
 		SkillRangeDecalComponent->SetDecalMaterial(Skill->GetDecalMaterial());
 		FVector2D SkillBound = Skill->GetSkillBound();
@@ -207,20 +199,16 @@ void ATargetIndicator::ShowSkillRange(TObjectPtr<USkillBase> Skill)
 
 void ATargetIndicator::HideSkillRange()
 {
-	TObjectPtr<UMaterialInstanceDynamic> Material = ConeMesh->CreateDynamicMaterialInstance(0, ConeMesh->GetMaterial(0));
-
-	Material->SetVectorParameterValue(FName("Color"), FLinearColor::Red);
-
-	TargetDecal->SetVisibility(true);
-
-	bShowSkillRange = false;
-
-	if (!SkillRangeDecalComponent)
+	if (bShowSkillRange)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("SkillRangeDecalComponent : Component Init Failed"))
-		return;
-	}
+		TObjectPtr<UMaterialInstanceDynamic> Material = ConeMesh->CreateDynamicMaterialInstance(0, ConeMesh->GetMaterial(0));
 
-	SkillRangeDecalComponent->SetVisibility(false);
-	SkillRangeDecalComponent = nullptr;
+		Material->SetVectorParameterValue(FName("Color"), FLinearColor::Red);
+
+		TargetDecal->SetVisibility(true);
+
+		bShowSkillRange = false;
+
+		SkillRangeDecalComponent->SetVisibility(false);
+	}
 }

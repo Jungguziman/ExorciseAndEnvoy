@@ -11,6 +11,7 @@
 
 class UInputMappingContext;
 class USkillBase;
+class UHUDWidget;
 
 UCLASS()
 class EXORCISEANDENVOY_API AExorcistController : public APlayerController
@@ -49,6 +50,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	TSubclassOf<ATargetIndicator> Indicator_Class;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<UHUDWidget> HUD_Class;
+
 	UPROPERTY()
 	FVector CharacterOldPos;
 	UPROPERTY()
@@ -57,5 +61,9 @@ protected:
 private:
 	UPROPERTY()
 	TObjectPtr<ATargetIndicator> Indicator_Instance;
+
+	UPROPERTY()
+	TObjectPtr<UHUDWidget> HUD_Instance;
+
 
 };

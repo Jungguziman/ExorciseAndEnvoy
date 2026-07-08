@@ -25,6 +25,10 @@ UCircleShapeSkill::UCircleShapeSkill()
 	}
 
 	Bound = FVector2D(300.0f, 300.0f);
+
+	CoolTime = 3.5f;
+	PreCastDelay = .3f;
+	PostCastDelay = 1.f;
 }
 
 void UCircleShapeSkill::BeginPlay()

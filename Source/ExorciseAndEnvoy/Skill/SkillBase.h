@@ -27,11 +27,29 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+public:
 	virtual void CastSkill(FVector Location);
 
+public:
 	FVector2D GetSkillBound() { return Bound; }
-
 	TObjectPtr<UMaterialInterface> GetDecalMaterial() { return SkillRangeDecalMaterial; }
+
+	FORCEINLINE float GetPreCastDelay() const { return PreCastDelay; }
+	FORCEINLINE void SetPreCastDelay(float Value) { PreCastDelay = Value; }
+
+	FORCEINLINE float GetPostCastDelay() const { return PostCastDelay; }
+	FORCEINLINE void SetPostCastDelay(float Value) { PostCastDelay = Value; }
+
+	FORCEINLINE float GetCoolTime() const { return CoolTime; }
+	FORCEINLINE void SetCoolTime(float Value) { CoolTime = Value; }
+
+	FORCEINLINE float GetCurrentCoolDown() const { return CoolDownTimer; }
+	FORCEINLINE void SetCurrentCoolDown(float Value) { CoolDownTimer = Value; }
+
+	FORCEINLINE bool IsInCoolDown() const { return CoolDownTimer > 0.0f; }
+	FORCEINLINE void StartCoolDown() { CoolDownTimer = CoolTime; }
+
+	FORCEINLINE bool IsPreCasting() const { return CoolDownTimer >= CoolTime - PreCastDelay; }
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill | Visual")
@@ -49,7 +67,10 @@ protected:
 	float PostCastDelay;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill Info | Attribute")
-	float CoolDown;
+	float CoolDownTimer;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill Info | Attribute")
+	float CoolTime;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill Info | Attribute")
 	float Damage;

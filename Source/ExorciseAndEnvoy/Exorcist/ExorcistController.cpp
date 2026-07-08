@@ -5,6 +5,7 @@
 #include "GameFramework/Pawn.h"
 #include "TargetIndicator.h"
 #include "SkillBase.h"
+#include "HUDWidget.h"
 
 
 void AExorcistController::BeginPlay()
@@ -20,6 +21,17 @@ void AExorcistController::BeginPlay()
 		Params.Instigator = GetPawn();
 
 		Indicator_Instance = GetWorld()->SpawnActor<ATargetIndicator>(Indicator_Class, FVector::ZeroVector, FRotator::ZeroRotator, Params);
+	}
+
+	if (HUD_Class)
+	{
+	
+		HUD_Instance = CreateWidget<UHUDWidget>(this, HUD_Class);
+
+		if (HUD_Instance)
+		{
+			HUD_Instance->AddToViewport();
+		}
 	}
 
 	CharacterOldPos = FVector(0.0f, 0.f, 0.f);

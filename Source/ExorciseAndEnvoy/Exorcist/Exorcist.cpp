@@ -11,6 +11,7 @@
 #include "AnimInstanceBase_Exorcist.h"
 #include "ExorcistController.h"
 #include "SkillManager.h"
+#include "SkillBase.h"
 #include "StatusAttribute.h"
 #include "TargetIndicator.h"
 
@@ -58,10 +59,6 @@ AExorcist::AExorcist()
 
 	StatusAttribute->SetMaxSpeed(500.0f);
 
-	IsCastings.Add(Tags::Input_A, false);
-	IsCastings.Add(Tags::Input_Q, false);
-	IsCastings.Add(Tags::Input_E, false);
-	IsCastings.Add(Tags::Input_R, false);
 }
 
 void AExorcist::BeginPlay()
@@ -93,8 +90,7 @@ void AExorcist::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	//if (!State.HasTag(Tags::Exorcist_Casting))
-		FollowingCursor(DeltaTime);
+	FollowingCursor(DeltaTime);
 
 	StatusAttribute->SetSpeed(GetVelocity().Length());
 }
@@ -143,131 +139,15 @@ void AExorcist::Move(const FInputActionValue& Value)
 	}
 }
 
-void AExorcist::Attack()
-{
-	//if (PC->)
-	bShowSkillRange = false;
-	PC->HideSkillRange();
-	CurrentAimingInput = FGameplayTag::EmptyTag;
-	CurrentInput = FGameplayTag::EmptyTag;
-
-	if (!PC->GetLockedTarget())
-		return;
-
-	if (State.HasTag(Tags::Exorcist_Casting)) // 스킬 시전중 기본공격 불가
-		return;
-
-	if (StatusAttribute->GetDeBuffs().HasTag(Tags::Block)) // 강력 CC 시 기본공격불가
-		return;
-	
-	if (AnimInstance->IsAnyMontagePlaying())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Montage Playing"));
-	}
-
-	if (!AnimInstance->IsAnyMontagePlaying() && !IsCastings[Tags::Input_A])
-	{
-		State.RemoveTag(Tags::Exorcist_Idle);
-		State.AddTag(Tags::Exorcist_Casting);
-
-		CurrentInput = Tags::Input_A;
-		IsCastings[Tags::Input_A] = true;
-
-		AnimInstance->Montage_Play(CastMontages[Tags::Input_A], 1.38f * StatusAttribute->GetFinalAttackSpeed());
-	}
-}
 
 void AExorcist::Casting(FGameplayTag Input)
 {
-	UE_LOG(LogTemp, Error, TEXT("%s"), *Input.ToString());
-
-	if (Input.MatchesTagExact(Tags::Input_A))
-	{
-		Attack();
-		
-		return;
-	}
-
-	if (StatusAttribute->GetDeBuffs().HasTag(Tags::Block) ||
-		StatusAttribute->GetDeBuffs().HasTag(Tags::Debuff_Silence))
-		return;
-
-	TObjectPtr<USkillBase> Skill = SkillManager->GetSkill(Input);
-	if (!Skill) return;
-
-	// [수정] Shift를 누른 채 스킬 키를 누른 경우 -> 사거리 표시 모드 돌입
-	if (bShowSkillRange)
-	{
-		CurrentAimingInput = Input; // 현재 조준 중인 스킬 기억
-		PC->ShowSkillRange(Skill);
-		return;
-	}
-
-	// [수정] 일반 시전 (Shift 없이 그냥 누른 경우) -> 즉시 시전
-	//bool IsAttacking = CurrentInput.MatchesTagExact(Tags::Input_A);
-
-	if (!State.HasTag(Tags::Exorcist_Casting) || IsCastings[Tags::Input_A])
-	{
-		if (IsCastings[Tags::Input_A])
-		{
-			EndCast(Tags::Input_A);
-		}
-
-		State.RemoveTag(Tags::Exorcist_Idle);
-		State.AddTag(Tags::Exorcist_Casting);
-
-		CurrentInput = Input;
-		SkillManager->SetSkillCastLocation(PC->GetIndicator()->GetActorLocation());
-		//IsCastings[Input] = true;
-
-		AnimInstance->Montage_Play(CastMontages[Input]);
-	}
-	else if (State.HasTag(Tags::Exorcist_Casting))
-	{
-		for (auto Casts : IsCastings)
-		{
-			if (Casts.Value)
-			{
-				UE_LOG(LogTemp, Error, TEXT("캔슬 성공 : %s -> %s"), *Casts.Key.ToString(), *Input.ToString());
-				EndCast(Casts.Key);
-
-				State.RemoveTag(Tags::Exorcist_Idle);
-				State.AddTag(Tags::Exorcist_Casting);
-
-				CurrentInput = Input;
-				SkillManager->SetSkillCastLocation(PC->GetIndicator()->GetActorLocation());
-				//IsCastings[Input] = true;
-
-				AnimInstance->Montage_Play(CastMontages[Input]);
-			}
-		}
-
-		
-	}
-
-	UE_LOG(LogTemp, Warning, TEXT("선딜 시작 : %s"), *Input.ToString());
+	SkillManager->ProcessSkillCast(Input, bShowSkillRange);
 }
 
 void AExorcist::ReleaseInput(FGameplayTag Input)
 {
-	PC->HideSkillRange(); // 사거리 끄기
-	bShowSkillRange = false; // 플래그 초기화
-	
-	if (Input.MatchesTagExact(Tags::Input_A))
-	{
-		Attack();
-	}
-	// 만약 이 스킬로 사거리를 조준 중이었다면 키를 뗄 때 발사
-	else if (CurrentAimingInput.MatchesTagExact(Input))
-	{
-		Casting(Input);
-	}
-	else if (CurrentAimingInput.IsValid())
-	{
-		Casting(CurrentAimingInput);
-	}
-
-	CurrentAimingInput = FGameplayTag::EmptyTag;
+	SkillManager->ProcessSkillRelease(Input);
 }
 
 void AExorcist::FollowingCursor(float DeltaTime)
@@ -282,40 +162,17 @@ void AExorcist::FollowingCursor(float DeltaTime)
 	SetActorRotation(NewRotation);
 }
 
-void AExorcist::DebugApplyChanges()
-{
-	StatusAttribute->SetMaxSpeed(GetCharacterMovement()->MaxWalkSpeed);
-}
 
 void AExorcist::BeginCast(FGameplayTag Input)
 {
-	UE_LOG(LogTemp, Warning, TEXT("선딜 끝 : %s"), *Input.ToString());
-
-	UE_LOG(LogTemp, Warning, TEXT("발사 : %s"), *Input.ToString());
-	SkillManager->TryCast(Input);
-	UE_LOG(LogTemp, Warning, TEXT("발사 완료 : %s"), *Input.ToString());
-
-	UE_LOG(LogTemp, Warning, TEXT("후딜 시작 : %s"), *Input.ToString());
-	
-	IsCastings[Input] = true;
+	SkillManager->BeginCast(Input);
 }
 
 void AExorcist::EndCast(FGameplayTag Input)
 {
-	UE_LOG(LogTemp, Warning, TEXT("후딜 끝 : %s"), *Input.ToString());
-
-	State.RemoveTag(Tags::Exorcist_Casting);
-	State.AddTag(Tags::Exorcist_Idle);
-
-	if (CurrentInput.MatchesTagExact(Input))
-	{
-	}
-	CurrentInput = FGameplayTag::EmptyTag;
-
-	AnimInstance->Montage_Stop(0.01f);
-
-	IsCastings[Input] = false;
+	SkillManager->EndCast(Input);
 }
+
 
 void AExorcist::GetMovementAnimData(float& OutSpeed, float& OutDirection, bool& OutIsDead)
 {
@@ -362,30 +219,16 @@ void AExorcist::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 		});
 		EnhancedInputComponent->BindActionInstanceLambda(ShowSkillRangeAction, ETriggerEvent::Completed, [this](const FInputActionInstance& I)
 		{
-			//bCancelSkill = true;
-			// Shift를 먼저 떼버렸을 때 조준선 제거 처리
-			//{
-			//	PC->HideSkillRange();
-			//	CurrentAimingInput = FGameplayTag::EmptyTag;
-			//}
-			//else
-			if (!CurrentAimingInput.IsValid())
+			if (!SkillManager->GetCurrentAimingInput().IsValid())
 				bShowSkillRange = false;
 		});
 
-		// 마우스 좌클릭 (ReleaseSkillAction) 설정
-		//EnhancedInputComponent->BindActionInstanceLambda(ReleaseSkillAction, ETriggerEvent::Started, [this](const FInputActionInstance& I)
-		//{
-		//	//bShowSkillRange = false;
-		//	//bCancelSkill = true;
-		//	// Shift를 먼저 떼버렸을 때 조준선 제거 처리
-		//	//if (CurrentAimingInput.IsValid())
-		//	{
-		//		//PC->HideSkillRange();
-		//		//CurrentAimingInput = FGameplayTag::EmptyTag;
-		//	}
-		//});
-		EnhancedInputComponent->BindAction(ReleaseSkillAction, ETriggerEvent::Started, this, &AExorcist::ReleaseInput, CurrentAimingInput);
+		EnhancedInputComponent->BindAction(ReleaseSkillAction, ETriggerEvent::Started, this, &AExorcist::ReleaseInput, SkillManager->GetCurrentAimingInput());
 	}
 }
 
+void AExorcist::DebugApplyChanges()
+{
+	StatusAttribute->SetMaxSpeed(GetCharacterMovement()->MaxWalkSpeed);
+	StatusAttribute->SetHP(StatusAttribute->GetHP() - 10.f);
+}
