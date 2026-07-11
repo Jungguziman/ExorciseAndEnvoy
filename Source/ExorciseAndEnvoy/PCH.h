@@ -27,5 +27,9 @@
 
 #include "EAEGameInstance.h"
 
+#include "ObjectPoolSubsystem.h"
+
 #define ECC_Floor ECC_GameTraceChannel1
 #define ECC_Enemy ECC_GameTraceChannel2
+
+#define GetOBJPool GetWorld()->GetSubsystem<UObjectPoolSubsystem>()

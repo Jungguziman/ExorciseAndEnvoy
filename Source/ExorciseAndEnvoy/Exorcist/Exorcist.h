@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 
 #include "AnimCallback.h"
+#include "Damageable.h"
 
 #include "Exorcist.generated.h"
 
@@ -20,7 +21,7 @@ class UAnimInstanceBase_Exorcist;
 class AExorcistController;
 
 UCLASS(Blueprintable)
-class EXORCISEANDENVOY_API AExorcist : public ACharacter, public IAnimCallback
+class EXORCISEANDENVOY_API AExorcist : public ACharacter, public IAnimCallback, public IDamageable
 {
 	GENERATED_BODY()
 
@@ -47,29 +48,34 @@ protected:
 	// 회전 처리
 	void FollowingCursor(float DeltaTime = 15.f);
 
-public:
-	// DEBUG YONG HAMSU
-	UFUNCTION(BlueprintCallable, CallInEditor, Category = "Debug")
-	void DebugApplyChanges();
-
+public: // 애니메이션
+	
 	// 애니메이션 -> 실제 스킬 사용 | 순수가상함수 구현
-	virtual void BeginCast(FGameplayTag Input);
-	virtual void EndCast(FGameplayTag Input);
+	virtual void BeginCast(FGameplayTag Input) override;
+	virtual void EndCast(FGameplayTag Input) override;
 
-	virtual void GetMovementAnimData(float& OutSpeed, float& OutDirection, bool& OutIsDead);
+	virtual void GetMovementAnimData(float& OutSpeed, float& OutDirection, bool& OutIsDead) override;
+
+public: // 데미지
+	virtual void ApplyDamage(const FSkillDamageEvent& DmgEvent, UStatusAttribute* Attacker) override;
 
 public:
-	TObjectPtr<USkillManager> GetSkillManager() { return SkillManager; }
+	USkillManager* GetSkillManager() { return SkillManager; }
 
-	TObjectPtr<AExorcistController> GetExorcistController() { return PC; }
+	AExorcistController* GetExorcistController() { return PC; }
 
-	TObjectPtr<UStatusAttribute> GetStatusAttribute() { return StatusAttribute; }
+	virtual UStatusAttribute* GetStatusAttribute() override { return StatusAttribute; }
 
 	void SetShowSkillRange(bool Value) { bShowSkillRange = Value; }
 
 	FGameplayTagContainer GetStateTags() { return State; }
 
-	TObjectPtr<UAnimMontage> GetCastMontage(FGameplayTag Input) { return CastMontages[Input]; }
+	UAnimMontage* GetCastMontage(FGameplayTag Input) { return CastMontages[Input]; }
+
+public:
+	// For Debug
+	UFUNCTION(BlueprintCallable, CallInEditor, Category = "Debug")
+	void DebugApplyChanges();
 
 protected: // 블루프린트에서 연결할 것들
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))

@@ -32,12 +32,11 @@ public:
 
 	virtual void PlayerTick(float DeltaTime) override;
 
-	TObjectPtr<ATargetIndicator> GetIndicator() { return Indicator_Instance; }
+	ATargetIndicator* GetIndicator() { return Indicator_Instance; }
 
-	TObjectPtr<AActor> GetLockedTarget() { return Indicator_Instance->GetCurrentTarget(); }
-	TArray<TObjectPtr<AActor>> GetTargetsInSkillArea() { return Indicator_Instance->GetTargetsInSkillArea(); }
+	AActor* GetLockedTarget() { return Indicator_Instance->GetCurrentTarget(); }
 
-	void ShowSkillRange(TObjectPtr<USkillBase> Skill);
+	void ShowSkillRange(USkillBase* Skill);
 	void HideSkillRange();
 
 protected:

@@ -23,6 +23,7 @@ void USkillManager::BeginPlay()
 	Super::BeginPlay();
 
 	OwnerCharacter = Cast<AExorcist>(GetOwner());
+
 	if (OwnerCharacter && OwnerCharacter->GetMesh())
 	{
 		OwnerAnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance();
@@ -35,7 +36,7 @@ void USkillManager::BeginPlay()
 		if (!Pair.Value)
 			continue;
 
-		TObjectPtr<USkillBase> Skill = NewObject<USkillBase>(this, Pair.Value);
+		USkillBase* Skill = NewObject<USkillBase>(this, Pair.Value);
 		
 		if (Skill)
 		{
@@ -60,19 +61,13 @@ void USkillManager::TickComponent(float DeltaTime, ELevelTick TickType, FActorCo
 
 	for (auto& Pair : Skill_Instances)
 	{
-		if (TObjectPtr<USkillBase> Skill = Pair.Value)
+		if (USkillBase* Skill = Pair.Value)
 		{
-			// SkillBase 내부에 선언된 CurrentCoolDown 수치를 직접 차감
 			if (Skill->GetCurrentCoolDown() > 0.0f)
 			{
-				// 주의: SkillBase 헤더에 `friend class USkillManager;`를 걸거나
-				// 별도의 수치 삭감용 public/protected Setter 함수를 구현해 두면 좋습니다.
 				float NewCoolDown = Skill->GetCurrentCoolDown() - DeltaTime;
 				Skill->SetCurrentCoolDown(NewCoolDown < 0.0f ? 0.0f : NewCoolDown);
 			}
-
-			if (Skill->IsPreCasting())
-				UE_LOG(LogTemp, Log, TEXT("[%f] PreCasting : %s"), Skill->GetCurrentCoolDown(), *Pair.Key.ToString());
 		}
 	}
 }
@@ -94,7 +89,11 @@ void USkillManager::ProcessSkillCast(FGameplayTag Input, bool bShiftPressed)
 	USkillBase* Skill = GetSkill(Input);
 	if (!Skill) return;
 
-	if (IsSkillInCoolTime(Input)) return;
+	if (OwnerCharacter->GetStatusAttribute()->GetMP() < Skill->GetMPCost()) return;
+
+	if (OwnerCharacter->GetStatusAttribute()->GetHP() < Skill->GetHPCost()) return;
+
+	if (Skill->IsInCoolDown()) return;
 
 	if (bShiftPressed)
 	{
@@ -238,7 +237,7 @@ void USkillManager::ExecuteAttack()
 	}
 }
 
-TObjectPtr<USkillBase> USkillManager::GetSkill(FGameplayTag Input)
+USkillBase* USkillManager::GetSkill(FGameplayTag Input)
 {
 	TObjectPtr<USkillBase>* SkillPtr = Skill_Instances.Find(Input);
 
@@ -268,7 +267,7 @@ void USkillManager::BeginCast(FGameplayTag Input)
 	if (Input.MatchesTagExact(Tags::Input_A))
 		return;
 
-	TObjectPtr<USkillBase> Skill = GetSkill(Input);
+	USkillBase* Skill = GetSkill(Input);
 	if (Skill && OwnerAnimInstance && Skill->GetPostCastDelay() > 0.0f)
 	{
 		UAnimMontage* ActiveMontage = OwnerAnimInstance->GetCurrentActiveMontage();

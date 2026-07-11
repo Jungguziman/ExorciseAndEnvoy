@@ -8,14 +8,21 @@
 #include "Components/DecalComponent.h"
 #include "TimerManager.h"
 
+#include "GameFramework/Actor.h"
+#include "GameFramework/Character.h"
+
+#include "Damageable.h"
+#include "Exorcist.h"
+#include "StatusAttribute.h"
+
+#include "SkillProjectile.h"
+
+
 // Sets default values for this component's properties
 USkillBase::USkillBase()
 {
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
 
-	// ...
 }
 
 
@@ -24,8 +31,7 @@ void USkillBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ...
-	
+	OwnerCharacter = Cast<ACharacter>(GetOwner());
 }
 
 
@@ -39,22 +45,32 @@ void USkillBase::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompo
 
 void USkillBase::CastSkill(FVector Location)
 {
-	if (SkillFXAsset)
+	if (SkillForm.MatchesTag(Tags::Skill_Form_Area) && SkillFXAsset)
 	{
 		UNiagaraComponent* SpawnedFX = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
 			GetWorld(),
 			SkillFXAsset,
 			Location,
 			FRotator::ZeroRotator,
-			FVector(Bound.X, Bound.Y, 10.0f), // Scale 주입
+			FVector(Bound.X, Bound.Y, 10.0f),
 			true
 		);
-
-		if (SpawnedFX)
-		{
-			// 시스템이 실행된 지 정확히 1.0초 후에 비활성화(Deactivate)되도록 수명 락을 겁니다.
-			// 나이아가라 자체 설정이 이미 1초 단발성(Burst Once)이라면 이 코드조차 필요 없습니다.
-		}
 	}
+	else if (SkillForm.MatchesTag(Tags::Skill_Form_Targeting) && SkillProjectile_Class)
+	{
+		FActorSpawnParameters Params;
+		Params.Owner = OwnerCharacter;
+		Params.Instigator = OwnerCharacter;
+
+		ASkillProjectile* Projectile = GetWorld()->SpawnActor<ASkillProjectile>(
+			SkillProjectile_Class,
+			OwnerCharacter->GetActorLocation(),
+			OwnerCharacter->GetActorRotation(),
+			Params
+		);
+	}
+
+	auto Status = Cast<IDamageable>(OwnerCharacter)->GetStatusAttribute();
+	Status->SetMP(Status->GetMP() - MPCost);
 }
 

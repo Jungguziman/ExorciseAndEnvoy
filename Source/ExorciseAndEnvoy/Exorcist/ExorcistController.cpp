@@ -14,6 +14,8 @@ void AExorcistController::BeginPlay()
 	bEnableClickEvents = true;
 	bEnableMouseOverEvents = true;
 
+	
+
 	if (Indicator_Class)
 	{
 		FActorSpawnParameters Params;
@@ -25,7 +27,6 @@ void AExorcistController::BeginPlay()
 
 	if (HUD_Class)
 	{
-	
 		HUD_Instance = CreateWidget<UHUDWidget>(this, HUD_Class);
 
 		if (HUD_Instance)
@@ -69,7 +70,7 @@ void AExorcistController::PlayerTick(float DeltaTime)
 
 }
 
-void AExorcistController::ShowSkillRange(TObjectPtr<USkillBase> Skill)
+void AExorcistController::ShowSkillRange(USkillBase* Skill)
 {
 	Indicator_Instance->ShowSkillRange(Skill);
 }

@@ -4,12 +4,17 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Damageable.h"
+
 #include "Dummy.generated.h"
 
+class UCapsuleComponent;
 class USkeletalMeshComponent;
+class UStatusAttribute;
+
 
 UCLASS()
-class EXORCISEANDENVOY_API ADummy : public AActor
+class EXORCISEANDENVOY_API ADummy : public AActor, public IDamageable
 {
 	GENERATED_BODY()
 	
@@ -25,9 +30,18 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	virtual void ApplyDamage(const FSkillDamageEvent& DmgEvent, UStatusAttribute* AttackerStatus);
+	virtual UStatusAttribute* GetStatusAttribute() override { return StatusAttribute; }
 
 protected:
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Mesh")
-	TObjectPtr<USkeletalMeshComponent> SKM;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Status")
+	TObjectPtr<UCapsuleComponent> CapsuleComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Status")
+	TObjectPtr<USkeletalMeshComponent> SkeletalMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Status")
+	TObjectPtr<UStatusAttribute> StatusAttribute;
+
 };

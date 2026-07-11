@@ -10,7 +10,7 @@ UStatusAttribute::UStatusAttribute()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = false;
+	PrimaryComponentTick.bCanEverTick = true;
 }
 
 
@@ -28,6 +28,40 @@ void UStatusAttribute::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+
+	float NewHP = HP + HPRegen.GetFinalValue() * DeltaTime;
+	HP = FMath::Min(NewHP, MaxHP.GetFinalValue());
+
+	float NewMP = MP + MPRegen.GetFinalValue() * DeltaTime;
+	MP = FMath::Min(NewMP, MaxMP.GetFinalValue());
+
+}
+
+void UStatusAttribute::ProcessApplyDamage(const FSkillDamageEvent& DmgEvent, UStatusAttribute* AttackerStatus)
+{
+	float CurrentHP = GetHP();
+	float MitigatedDamage = DmgEvent.FinalDamage;
+
+	// 포인터 방어벽 및 관통력 계산
+	if (AttackerStatus)
+	{
+		float DefenseReduction = GetFinalDefence() * (100.f - AttackerStatus->GetPenetrationRate()) / 100.f;
+		MitigatedDamage -= DefenseReduction;
+	}
+	else
+		MitigatedDamage -= GetFinalDefence();
+
+	// 마이너스 데미지 버그 차단
+	MitigatedDamage = FMath::Max(MitigatedDamage, 0.0f);
+
+	// 체력 반영
+	SetHP(FMath::Max(CurrentHP - MitigatedDamage, 0.0f));
+
+	// 최적화 디버프 루프
+	for (const FActiveEffect& Debuff : DmgEvent.Debuffs)
+	{
+		ApplyActiveEffect(Debuff.EffectTag, Debuff.Duration, Debuff.Value);
+	}
 }
 
 void UStatusAttribute::ApplyActiveEffect(FGameplayTag EffectTag, float Duration, float Value)

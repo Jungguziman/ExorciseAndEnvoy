@@ -31,15 +31,7 @@ namespace Tags
 	UE_DEFINE_GAMEPLAY_TAG(Debuff_Taunt, "State.Debuff.Taunt");
 
 	UE_DEFINE_GAMEPLAY_TAG(Block, "State.Block");
-	
-	UE_DEFINE_GAMEPLAY_TAG(SkillType_Burn, "State.SkillType.Burn");
-	UE_DEFINE_GAMEPLAY_TAG(SkillType_Dark, "State.SkillType.Dark");
-	UE_DEFINE_GAMEPLAY_TAG(SkillType_Electric, "State.SkillType.Electric");
-	UE_DEFINE_GAMEPLAY_TAG(SkillType_Freeze, "State.SkillType.Freeze");
-	UE_DEFINE_GAMEPLAY_TAG(SkillType_Light, "State.SkillType.Light");
-	UE_DEFINE_GAMEPLAY_TAG(SkillType_Plauge, "State.SkillType.Plague");
-	UE_DEFINE_GAMEPLAY_TAG(SkillType_Rock, "State.SkillType.Rock");
-	UE_DEFINE_GAMEPLAY_TAG(SkillType_Wind, "State.SkillType.Wind");
+
 
 	UE_DEFINE_GAMEPLAY_TAG(Stack_Burn, "State.Stack.Burn");
 	UE_DEFINE_GAMEPLAY_TAG(Stack_Dark, "State.Stack.Dark");
@@ -49,12 +41,31 @@ namespace Tags
 	UE_DEFINE_GAMEPLAY_TAG(Stack_Plauge, "State.Stack.Plague");
 	UE_DEFINE_GAMEPLAY_TAG(Stack_Rock, "State.Stack.Rock");
 	UE_DEFINE_GAMEPLAY_TAG(Stack_Wind, "State.Stack.Wind");
+	
+	UE_DEFINE_GAMEPLAY_TAG(Skill_Type_Burn, "Skill.Type.Burn");
+	UE_DEFINE_GAMEPLAY_TAG(Skill_Type_Dark, "Skill.Type.Dark");
+	UE_DEFINE_GAMEPLAY_TAG(Skill_Type_Electric, "Skill.Type.Electric");
+	UE_DEFINE_GAMEPLAY_TAG(Skill_Type_Freeze, "Skill.Type.Freeze");
+	UE_DEFINE_GAMEPLAY_TAG(Skill_Type_Light, "Skill.Type.Light");
+	UE_DEFINE_GAMEPLAY_TAG(Skill_Type_Plauge, "Skill.Type.Plague");
+	UE_DEFINE_GAMEPLAY_TAG(Skill_Type_Rock, "Skill.Type.Rock");
+	UE_DEFINE_GAMEPLAY_TAG(Skill_Type_Wind, "Skill.Type.Wind");
 
 	UE_DEFINE_GAMEPLAY_TAG(Input_None, "Skill.Input.None");
 	UE_DEFINE_GAMEPLAY_TAG(Input_A, "Skill.Input.A");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Q, "Skill.Input.Q");
 	UE_DEFINE_GAMEPLAY_TAG(Input_E, "Skill.Input.E");
 	UE_DEFINE_GAMEPLAY_TAG(Input_R, "Skill.Input.R");
+
+	UE_DEFINE_GAMEPLAY_TAG(Skill_Form_Single, "Skill.Form.Targeting.Single");
+	UE_DEFINE_GAMEPLAY_TAG(Skill_Form_Projectile, "Skill.Form.Targeting.Projectile");
+	UE_DEFINE_GAMEPLAY_TAG(Skill_Form_Arrow, "Skill.Form.Area.Arrow");
+	UE_DEFINE_GAMEPLAY_TAG(Skill_Form_Circle, "Skill.Form.Area.Circle");
+	UE_DEFINE_GAMEPLAY_TAG(Skill_Form_Sector, "Skill.Form.Area.Sector");
+	UE_DEFINE_GAMEPLAY_TAG(Skill_Form_Ultimate, "Skill.Form.Area.Ultimate");
+
+	UE_DEFINE_GAMEPLAY_TAG(Skill_Form_Targeting, "Skill.Form.Targeting");
+	UE_DEFINE_GAMEPLAY_TAG(Skill_Form_Area, "Skill.Form.Area");
 }
 
 UEAEGameInstance::UEAEGameInstance()

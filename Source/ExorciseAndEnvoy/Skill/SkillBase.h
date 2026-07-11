@@ -9,6 +9,9 @@
 
 class UMaterialInterface;
 class UNiagaraSystem;
+class ASkillProjectile;
+class USkillDamageType;
+class AExorcist;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class EXORCISEANDENVOY_API USkillBase : public UActorComponent
@@ -32,7 +35,11 @@ public:
 
 public:
 	FVector2D GetSkillBound() { return Bound; }
-	TObjectPtr<UMaterialInterface> GetDecalMaterial() { return SkillRangeDecalMaterial; }
+	UMaterialInterface* GetDecalMaterial() { return SkillRangeDecalMaterial; }
+
+	FORCEINLINE float GetMPCost() const { return MPCost; }
+	FORCEINLINE float GetHPCost() const { return HPCost; }
+	FORCEINLINE float GetSpecialCost() const { return SpecialCost; }
 
 	FORCEINLINE float GetPreCastDelay() const { return PreCastDelay; }
 	FORCEINLINE void SetPreCastDelay(float Value) { PreCastDelay = Value; }
@@ -58,8 +65,13 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill | Visual")
 	TObjectPtr<UMaterialInterface> SkillRangeDecalMaterial;
 
-protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill | Projectile")
+	TSubclassOf<ASkillProjectile> SkillProjectile_Class;
 
+	UPROPERTY()
+	TObjectPtr<ACharacter> OwnerCharacter;
+
+protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill Info | Attribute")
 	float PreCastDelay;
 
@@ -84,13 +96,14 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill Info | Attribute")
 	float SpecialCost;
 
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill Info | Attribute")
 	FVector2D Bound = FVector2D(100.f, 100.f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill Info | Tags")
-	FGameplayTagContainer SkillTypes;
+	FGameplayTag SkillForm;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill Info | Tags")
-	FGameplayTagContainer SkillDebuffs;
+	TArray<FActiveEffect> SkillEffects;
 
 };

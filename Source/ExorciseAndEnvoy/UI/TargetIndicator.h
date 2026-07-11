@@ -31,11 +31,10 @@ public:
 
 	void ToggleCursorLock() { bCursorLock = bCursorLock ? false : true; }
 
-	void ShowSkillRange(TObjectPtr<USkillBase> Skill);
+	void ShowSkillRange(USkillBase* Skill);
 	void HideSkillRange();
 
-	TObjectPtr<AActor> GetCurrentTarget() { return CurrentTarget; }
-	TArray<TObjectPtr<AActor>> GetTargetsInSkillArea() { return TargetsInArea; }
+	AActor* GetCurrentTarget() { return CurrentTarget; }
 
 protected:
 	UPROPERTY(VisibleAnywhere, Category = "Visual")
@@ -59,9 +58,6 @@ protected:
 private:
 	UPROPERTY()
 	TObjectPtr<AActor> CurrentTarget;
-
-	UPROPERTY()
-	TArray<TObjectPtr<AActor>> TargetsInArea;
 
 	UPROPERTY()
 	TArray<TEnumAsByte<EObjectTypeQuery>> FloorObjTypes;

@@ -29,6 +29,7 @@ public class ExorciseAndEnvoy : ModuleRules
 			ModuleDirectory,
 			Path.Combine(ModuleDirectory, "Interface"),
 			Path.Combine(ModuleDirectory, "UI"),
+			Path.Combine(ModuleDirectory, "Subsystem"),
             Path.Combine(ModuleDirectory, "Game"), 
             Path.Combine(ModuleDirectory, "Exorcist"), 
             Path.Combine(ModuleDirectory, "Enemy"), 

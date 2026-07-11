@@ -50,7 +50,7 @@ AExorcist::AExorcist()
 	GetCapsuleComponent()->SetCapsuleRadius(35.f);
 
 	GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, -100.f));
-	GetMesh()->SetRelativeRotation(FRotator(0.f, 0.f, -90.f));
+	GetMesh()->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
 
 	SkillManager = CreateDefaultSubobject<USkillManager>(TEXT("SkillManager"));
 	StatusAttribute = CreateDefaultSubobject<UStatusAttribute>(TEXT("StatusAttribute"));
@@ -183,6 +183,11 @@ void AExorcist::GetMovementAnimData(float& OutSpeed, float& OutDirection, bool& 
 	OutIsDead = StatusAttribute->GetHP() <= 0.f ? true : false;
 }
 
+void AExorcist::ApplyDamage(const FSkillDamageEvent& DmgEvent, UStatusAttribute* AttackerStatus)
+{
+	StatusAttribute->ProcessApplyDamage(DmgEvent, AttackerStatus);
+}
+
 void AExorcist::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
@@ -231,4 +236,8 @@ void AExorcist::DebugApplyChanges()
 {
 	StatusAttribute->SetMaxSpeed(GetCharacterMovement()->MaxWalkSpeed);
 	StatusAttribute->SetHP(StatusAttribute->GetHP() - 10.f);
+	StatusAttribute->SetMP(StatusAttribute->GetMP() + 10.f);
+
+
+	UE_LOG(LogTemp, Warning, TEXT("Registered Objects Count : %d"), GetOBJPool->GetRegisteredActorCount());
 }

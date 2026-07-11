@@ -177,12 +177,12 @@ void ATargetIndicator::Tick(float DeltaTime)
 
 }
 
-void ATargetIndicator::ShowSkillRange(TObjectPtr<USkillBase> Skill)
+void ATargetIndicator::ShowSkillRange(USkillBase* Skill)
 {
 
 	if (!bShowSkillRange)
 	{
-		TObjectPtr<UMaterialInstanceDynamic> Material = ConeMesh->CreateDynamicMaterialInstance(0, ConeMesh->GetMaterial(0));
+		UMaterialInstanceDynamic* Material = ConeMesh->CreateDynamicMaterialInstance(0, ConeMesh->GetMaterial(0));
 
 		Material->SetVectorParameterValue(FName("Color"), FLinearColor::Blue);
 
@@ -201,7 +201,7 @@ void ATargetIndicator::HideSkillRange()
 {
 	if (bShowSkillRange)
 	{
-		TObjectPtr<UMaterialInstanceDynamic> Material = ConeMesh->CreateDynamicMaterialInstance(0, ConeMesh->GetMaterial(0));
+		UMaterialInstanceDynamic* Material = ConeMesh->CreateDynamicMaterialInstance(0, ConeMesh->GetMaterial(0));
 
 		Material->SetVectorParameterValue(FName("Color"), FLinearColor::Red);
 

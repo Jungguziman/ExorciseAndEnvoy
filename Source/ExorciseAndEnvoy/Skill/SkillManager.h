@@ -37,7 +37,7 @@ public:
 	void ExecuteAttack();
 
 	// Getter API
-	TObjectPtr<USkillBase> GetSkill(FGameplayTag Input);
+	USkillBase* GetSkill(FGameplayTag Input);
 	bool IsSkillInCoolTime(FGameplayTag Input);
 	FORCEINLINE void SetSkillCastLocation(FVector Location) { NextSkillCastLocation = Location; }
 

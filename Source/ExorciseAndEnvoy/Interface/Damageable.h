@@ -4,22 +4,26 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
-#include "Movable.generated.h"
+#include "Damageable.generated.h"
+
+class UStatusAttribute;
 
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
-class UMovable : public UInterface
+class UDamageable : public UInterface
 {
 	GENERATED_BODY()
 };
 
-/**
- * 
- */
-class EXORCISEANDENVOY_API IMovable
+
+class EXORCISEANDENVOY_API IDamageable
 {
 	GENERATED_BODY()
 
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
+	virtual class UStatusAttribute* GetStatusAttribute() = 0;
+
+	virtual void ApplyDamage(const FSkillDamageEvent& DmgEvent, UStatusAttribute* Attacker) = 0;
+	
 };

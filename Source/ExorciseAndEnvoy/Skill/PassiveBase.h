@@ -24,11 +24,14 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	virtual void SpawnEnvoy() {};
+	virtual void SpawnEnvoy();
 
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "")
-	TObjectPtr<AActor> EnvoyClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Envoy Class")
+	TSubclassOf<AActor> Envoy_Class;
+
+	UPROPERTY()
+	TArray<TObjectPtr<AActor>> Envoy_Instances;
 
 	
 };

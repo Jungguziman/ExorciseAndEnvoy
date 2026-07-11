@@ -7,56 +7,6 @@
 
 #include "StatusAttribute.generated.h"
 
-USTRUCT(BlueprintType)
-struct FValueAttribute
-{
-	GENERATED_BODY()
-
-	FValueAttribute() : Base(1.f), Bonus(0.0f), Ratio(100.0f) {}
-
-	FValueAttribute(float BaseValue) : Base(BaseValue), Bonus(0.0f), Ratio(100.0f) {}
-
-	FValueAttribute(float BaseValue, float BonusValue, float FinalRatio) : Base(BaseValue), Bonus(BonusValue), Ratio(FinalRatio) {}
-
-public:
-	UPROPERTY(EditAnywhere, Category = "Stat")
-	float Base;
-
-	UPROPERTY(EditAnywhere, Category = "Stat")
-	float Bonus;
-
-	UPROPERTY(EditAnywhere, Category = "Stat")
-	float Ratio;
-
-	FORCEINLINE float GetFinalValue() const { return (Base + Bonus) * (Ratio / 100.0f); }
-	FORCEINLINE void SetValue(float Value) { Base = Value; }
-	FORCEINLINE void AddBonusValue(float BonusValue) { Bonus += BonusValue; }
-	FORCEINLINE void SetBonusValue(float BonusValue) { Bonus = BonusValue; }
-	FORCEINLINE void AddFinalRatio(float FinalRatio) { Ratio += FinalRatio; }
-	FORCEINLINE void SetFinalRatio(float FinalRatio = 100.0f) { Ratio = FinalRatio; }
-};
-
-USTRUCT(BlueprintType)
-struct FActiveEffect
-{
-	GENERATED_BODY()
-
-	FTimerHandle TimerHandle;
-	FGameplayTag EffectTag;
-	FGameplayTag BlockTag;
-	float Duration;
-	float Value;
-
-	FActiveEffect() :
-		Duration(0.0f), Value(100.0f) {}
-	FActiveEffect(FGameplayTag EffectTag, float Duration, float Value) :
-		EffectTag(EffectTag), Duration(Duration), Value(Value) {}
-	FActiveEffect(FGameplayTag EffectTag, FGameplayTag BlockTag, float Duration, float Value) :
-		EffectTag(EffectTag), BlockTag(BlockTag), Duration(Duration), Value(Value) {}
-
-};
-
-
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class EXORCISEANDENVOY_API UStatusAttribute : public UActorComponent
 {
@@ -75,6 +25,8 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
+	void ProcessApplyDamage(const FSkillDamageEvent& DmgEvent, UStatusAttribute* AttackerStatus);
+
 	UFUNCTION(BlueprintCallable, Category = "Status Effect")
 	void ApplyActiveEffect(FGameplayTag EffectTag, float Duration, float Value = 100.0f);
 	UFUNCTION(BlueprintCallable, Category = "Status Effect")
@@ -156,9 +108,8 @@ public:
 	FORCEINLINE float GetDamage() const { return Damage; }
 	FORCEINLINE void SetDamage(float NewDamage) { Damage = NewDamage; }
 
-	// DamageTaken (피격 받는 데미지 연산용)
-	FORCEINLINE float GetDamageTaken() const { return DamageTaken; }
-	FORCEINLINE void SetDamageTaken(float NewDamageTaken) { DamageTaken = NewDamageTaken; }
+	FORCEINLINE float GetPenetrationRate() const { return PenetrationRate; }
+	FORCEINLINE void SetPenetrationRate(float NewPenetration)  { PenetrationRate = NewPenetration; }
 
 protected:
 	// Effect
@@ -210,13 +161,12 @@ protected:
 	FValueAttribute AttackDamage = 15.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Status")
-	FValueAttribute AttackSpeed = 0.78f;
+	FValueAttribute AttackSpeed = 0.78f; // per seconds
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Status")
 	float Damage = 100.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Status")
-	float DamageTaken = 100.0f;
-
+	float PenetrationRate = 0.f;
 
 };

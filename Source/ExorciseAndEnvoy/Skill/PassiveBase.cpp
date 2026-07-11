@@ -32,3 +32,7 @@ void UPassiveBase::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
 	// ...
 }
 
+void UPassiveBase::SpawnEnvoy()
+{
+}
+
