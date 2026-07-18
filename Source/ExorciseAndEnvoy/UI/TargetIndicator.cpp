@@ -67,7 +67,7 @@ void ATargetIndicator::Tick(float DeltaTime)
 		OffsetTimer += DeltaTime * 0.5f;
 		if (OffsetTimer > 1.0f) OffsetTimer = 0.0f;
 
-		Offset = FMath::Lerp(0.0f, 100.0f, OffsetCurve->GetFloatValue(OffsetTimer)) + 50.0f;
+		Offset = FMath::Lerp(0.0f, 100.0f, OffsetCurve->GetFloatValue(OffsetTimer));
 	}
 
 	FHitResult HitResult;
@@ -119,6 +119,8 @@ void ATargetIndicator::Tick(float DeltaTime)
 		FinalTargetLocation = bCursorLock ? LastCursorLocation : HitResult.ImpactPoint;
 	}
 
+	FinalTargetLocation.Z = 0.f;
+
 	// ---------------------------------------------------------------------------
 	// [3단계] 결정된 최종 좌표(FinalTargetLocation) 기반 피드백 표현 영역
 	// ---------------------------------------------------------------------------
@@ -128,7 +130,7 @@ void ATargetIndicator::Tick(float DeltaTime)
 		// [수정] 스킬 범위 표시 시에는 땅바닥 위치(LastCursorLocation) 기준으로 고정 처리
 		SetActorLocation(LastCursorLocation);
 
-		ConeMesh->SetRelativeLocation(FVector(0.f, 0.f, Offset));
+		ConeMesh->SetRelativeLocation(FVector(0.f, 0.f, Offset + 50.f));
 	
 		SkillRangeDecalComponent->SetWorldLocation(LastCursorLocation);
 	}
@@ -143,7 +145,7 @@ void ATargetIndicator::Tick(float DeltaTime)
 			FVector BoxExtent;
 			CurrentTarget->GetActorBounds(false, Center, BoxExtent);
 
-			ConeMesh->SetRelativeLocation(FVector(0.f, 0.f, Offset + BoxExtent.Z * 1.5f));
+			ConeMesh->SetRelativeLocation(FVector(0.f, 0.f, Offset + BoxExtent.Z * 2.0f));
 
 			float EnemyRadius = FMath::Max(BoxExtent.X, BoxExtent.Y);
 			float DecalRadius = EnemyRadius + 15.0f;
@@ -168,6 +170,8 @@ void ATargetIndicator::Tick(float DeltaTime)
 			LineEffect->SetVisibility(true);
 			LineEffect->SetVectorParameter(FName("StartPos"), FVector(Character->GetActorLocation().X, Character->GetActorLocation().Y, 0.0f));
 			LineEffect->SetVectorParameter(FName("EndPos"), FVector(FinalTargetLocation.X, FinalTargetLocation.Y, 0.0f));
+
+			
 		}
 	}
 	else

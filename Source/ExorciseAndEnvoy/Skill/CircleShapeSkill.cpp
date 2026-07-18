@@ -12,7 +12,7 @@
 #include "Damageable.h"
 
 #include "Exorcist.h"
-
+#include "StatusAttribute.h"
 #include "ObjectPoolSubsystem.h"
 
 UCircleShapeSkill::UCircleShapeSkill()
@@ -23,7 +23,7 @@ UCircleShapeSkill::UCircleShapeSkill()
 		SkillRangeDecalMaterial = DecalMaterialRef.Object;
 	}
 
-	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> NiagaraSystemAsset(TEXT("/Script/Niagara.NiagaraSystem'/Game/Exorcists/NS_CircleSkill.NS_CircleSkill'"));
+	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> NiagaraSystemAsset(TEXT("/Script/Niagara.NiagaraSystem'/Game/NiagaraExamples/FX_Explosions/NS_Dirt_Explosion_Medium.NS_Dirt_Explosion_Medium'"));
 
 	if (NiagaraSystemAsset.Succeeded())
 	{
@@ -57,7 +57,6 @@ void UCircleShapeSkill::CastSkill(FVector Location)
 {
 	Super::CastSkill(Location);
 	
-
 	TArray<AActor*> ActorArr;
 	GetOBJPool->GetActorsInCircle(FVector2D(Location), Bound.X, ActorArr);
 
@@ -74,8 +73,9 @@ void UCircleShapeSkill::CastSkill(FVector Location)
 		FSkillDamageEvent DmgEvent;
 		DmgEvent.FinalDamage = Damage;
 		DmgEvent.Debuffs = SkillEffects;
+		DmgEvent.PenetrationRate = Caster->GetStatusAttribute()->GetPenetrationRate();
 
-		Damageable->ApplyDamage(DmgEvent, Caster->GetStatusAttribute());
+		Damageable->ApplyDamage(DmgEvent);
 	}
 
 }

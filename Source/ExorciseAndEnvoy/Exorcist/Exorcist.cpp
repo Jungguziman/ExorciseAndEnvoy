@@ -51,6 +51,7 @@ AExorcist::AExorcist()
 
 	GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, -100.f));
 	GetMesh()->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
+	GetMesh()->bReceivesDecals = false;
 
 	SkillManager = CreateDefaultSubobject<USkillManager>(TEXT("SkillManager"));
 	StatusAttribute = CreateDefaultSubobject<UStatusAttribute>(TEXT("StatusAttribute"));
@@ -70,8 +71,11 @@ void AExorcist::BeginPlay()
 	else
 		UE_LOG(LogTemp, Warning, TEXT("AnimInstance Not Selected"));
 
-	if (!StatusAttribute)
+
+
+	if (!IsValid(SkillManager) || !IsValid(StatusAttribute))
 		UKismetSystemLibrary::QuitGame(GetWorld(), GetWorld()->GetFirstPlayerController(), EQuitPreference::Quit, false);
+
 
 	State.AddTag(Tags::Exorcist_Idle);
 }
@@ -90,6 +94,9 @@ void AExorcist::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (StatusAttribute->IsDead())
+		return;
+
 	FollowingCursor(DeltaTime);
 
 	StatusAttribute->SetSpeed(GetVelocity().Length());
@@ -101,6 +108,8 @@ void AExorcist::Move(const FInputActionValue& Value)
 		StatusAttribute->GetDeBuffs().HasTag(Tags::Debuff_Root))	// 속박 시 이동 불가
 		return;
 
+	if (StatusAttribute->IsDead())
+		return;
 
 	State.RemoveTag(Tags::Exorcist_Idle);
 	State.AddTag(Tags::Exorcist_Moving);
@@ -142,11 +151,17 @@ void AExorcist::Move(const FInputActionValue& Value)
 
 void AExorcist::Casting(FGameplayTag Input)
 {
+	if (StatusAttribute->IsDead())
+		return;
+
 	SkillManager->ProcessSkillCast(Input, bShowSkillRange);
 }
 
 void AExorcist::ReleaseInput(FGameplayTag Input)
 {
+	if (StatusAttribute->IsDead())
+		return;
+
 	SkillManager->ProcessSkillRelease(Input);
 }
 
@@ -173,19 +188,21 @@ void AExorcist::EndCast(FGameplayTag Input)
 	SkillManager->EndCast(Input);
 }
 
-
 void AExorcist::GetMovementAnimData(float& OutSpeed, float& OutDirection, bool& OutIsDead)
 {
 	FVector Velocity = GetVelocity();
 
+	if (!IsValid(StatusAttribute))
+		return;
+
 	OutSpeed = StatusAttribute->GetSpeed();
 	OutDirection = UKismetAnimationLibrary::CalculateDirection(Velocity, GetActorRotation());
-	OutIsDead = StatusAttribute->GetHP() <= 0.f ? true : false;
+	OutIsDead = StatusAttribute->IsDead();
 }
 
-void AExorcist::ApplyDamage(const FSkillDamageEvent& DmgEvent, UStatusAttribute* AttackerStatus)
+void AExorcist::ApplyDamage(const FSkillDamageEvent& DmgEvent)
 {
-	StatusAttribute->ProcessApplyDamage(DmgEvent, AttackerStatus);
+	StatusAttribute->ProcessApplyDamage(DmgEvent);
 }
 
 void AExorcist::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -228,7 +245,8 @@ void AExorcist::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 				bShowSkillRange = false;
 		});
 
-		EnhancedInputComponent->BindAction(ReleaseSkillAction, ETriggerEvent::Started, this, &AExorcist::ReleaseInput, SkillManager->GetCurrentAimingInput());
+		if (SkillManager)
+			EnhancedInputComponent->BindAction(ReleaseSkillAction, ETriggerEvent::Started, this, &AExorcist::ReleaseInput, SkillManager->GetCurrentAimingInput());
 	}
 }
 
@@ -237,7 +255,6 @@ void AExorcist::DebugApplyChanges()
 	StatusAttribute->SetMaxSpeed(GetCharacterMovement()->MaxWalkSpeed);
 	StatusAttribute->SetHP(StatusAttribute->GetHP() - 10.f);
 	StatusAttribute->SetMP(StatusAttribute->GetMP() + 10.f);
-
 
 	UE_LOG(LogTemp, Warning, TEXT("Registered Objects Count : %d"), GetOBJPool->GetRegisteredActorCount());
 }

@@ -52,9 +52,11 @@ void USkillBase::CastSkill(FVector Location)
 			SkillFXAsset,
 			Location,
 			FRotator::ZeroRotator,
-			FVector(Bound.X, Bound.Y, 10.0f),
+			FVector(1.f, 1.f, 1.f),
 			true
 		);
+
+		SpawnedFX->SetFloatParameter(TEXT("SkillBound"), Bound.X);
 	}
 	else if (SkillForm.MatchesTag(Tags::Skill_Form_Targeting) && SkillProjectile_Class)
 	{

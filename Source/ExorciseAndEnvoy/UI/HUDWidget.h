@@ -68,5 +68,6 @@ private:
 	TObjectPtr<AExorcist> CachedPlayerCharacter;
 
 	// 롤식 피격 잔상 바가 스르륵 닳게 만들기 위한 보간(Interpolation) 수치 속도
+	UPROPERTY()
 	float HPFadeSpeed = 5.0f;
 };

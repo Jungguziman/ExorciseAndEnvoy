@@ -135,8 +135,9 @@ struct FSkillDamageEvent
 
 	FSkillDamageEvent() {}
 	FSkillDamageEvent(float FinalDamage) : FinalDamage(FinalDamage) {}
+	FSkillDamageEvent(float FinalDamage, float PenetrationRate) : FinalDamage(FinalDamage), PenetrationRate(PenetrationRate) {}
 
-	FSkillDamageEvent(float FinalDamage, std::initializer_list<FActiveEffect> Effects) : FinalDamage(FinalDamage)
+	FSkillDamageEvent(float FinalDamage, float PenetrationRate, std::initializer_list<FActiveEffect> Effects) : FinalDamage(FinalDamage)
 	{
 		for (FActiveEffect Effect : Effects)
 			Debuffs.Add(Effect);
@@ -144,6 +145,9 @@ struct FSkillDamageEvent
 
 	UPROPERTY()
 	float FinalDamage = 0.f;
+
+	UPROPERTY()
+	float PenetrationRate = 0.f;
 
 	UPROPERTY()
 	TArray<FActiveEffect> Debuffs;

@@ -31,5 +31,8 @@
 			"Name": "AnimationWarping",
 			"Enabled": true
 		}
+	],
+	"AdditionalPluginDirectories": [
+		"../../../Users/user/Desktop/meshy"
 	]
 }

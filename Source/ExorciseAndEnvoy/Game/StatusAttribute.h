@@ -7,7 +7,7 @@
 
 #include "StatusAttribute.generated.h"
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS( Blueprintable, BlueprintType, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class EXORCISEANDENVOY_API UStatusAttribute : public UActorComponent
 {
 	GENERATED_BODY()
@@ -25,7 +25,7 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
-	void ProcessApplyDamage(const FSkillDamageEvent& DmgEvent, UStatusAttribute* AttackerStatus);
+	void ProcessApplyDamage(const FSkillDamageEvent& DmgEvent);
 
 	UFUNCTION(BlueprintCallable, Category = "Status Effect")
 	void ApplyActiveEffect(FGameplayTag EffectTag, float Duration, float Value = 100.0f);
@@ -73,6 +73,8 @@ public:
 
 	FORCEINLINE float GetHP() const { return HP; }
 	FORCEINLINE void SetHP(float NewHP) { HP = FMath::Clamp(NewHP, 0.0f, GetFinalMaxHP()); }
+	FORCEINLINE bool IsDead() const { return HP <= 0.f; }
+
 
 	FORCEINLINE float GetFinalHPRegen() const { return HPRegen.GetFinalValue(); }
 	FORCEINLINE FValueAttribute& GetHPRegenAttribute() { return HPRegen; }

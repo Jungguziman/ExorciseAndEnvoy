@@ -24,6 +24,6 @@ class EXORCISEANDENVOY_API IDamageable
 public:
 	virtual class UStatusAttribute* GetStatusAttribute() = 0;
 
-	virtual void ApplyDamage(const FSkillDamageEvent& DmgEvent, UStatusAttribute* Attacker) = 0;
+	virtual void ApplyDamage(const FSkillDamageEvent& DmgEvent) = 0;
 	
 };

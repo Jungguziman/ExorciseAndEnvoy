@@ -9,7 +9,7 @@
 /**
  * 
  */
-UCLASS()
+UCLASS(Blueprintable)
 class EXORCISEANDENVOY_API UCircleShapeSkill : public USkillBase
 {
 	GENERATED_BODY()

@@ -57,7 +57,7 @@ public: // 애니메이션
 	virtual void GetMovementAnimData(float& OutSpeed, float& OutDirection, bool& OutIsDead) override;
 
 public: // 데미지
-	virtual void ApplyDamage(const FSkillDamageEvent& DmgEvent, UStatusAttribute* Attacker) override;
+	virtual void ApplyDamage(const FSkillDamageEvent& DmgEvent) override;
 
 public:
 	USkillManager* GetSkillManager() { return SkillManager; }
@@ -117,10 +117,10 @@ protected: // 캐릭터 카메라 구조
 	FVector DefaultCameraPosition;
 
 protected: // 액터 컴포넌트
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components|SkillManager")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|SkillManager")
 	TObjectPtr<USkillManager> SkillManager;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components|StatusAttribute")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|StatusAttribute")
 	TObjectPtr<UStatusAttribute> StatusAttribute;
 
 	UPROPERTY()

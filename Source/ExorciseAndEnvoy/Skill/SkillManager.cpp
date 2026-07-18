@@ -5,6 +5,7 @@
 #include "StatusAttribute.h"
 #include "Exorcist.h"
 #include "ExorcistController.h"
+#include "SkillProjectile.h"
 
 USkillManager::USkillManager()
 {
@@ -15,6 +16,11 @@ USkillManager::USkillManager()
 	IsCastings.Add(Tags::Input_Q, false);
 	IsCastings.Add(Tags::Input_E, false);
 	IsCastings.Add(Tags::Input_R, false);
+
+	IsEquiped.Add(Tags::Input_A, false);
+	IsEquiped.Add(Tags::Input_Q, false);
+	IsEquiped.Add(Tags::Input_E, false);
+	IsEquiped.Add(Tags::Input_R, false);
 }
 
 // Called when the game starts
@@ -37,12 +43,12 @@ void USkillManager::BeginPlay()
 			continue;
 
 		USkillBase* Skill = NewObject<USkillBase>(this, Pair.Value);
-		
+
 		if (Skill)
 		{
 			Skill->PrimaryComponentTick.bCanEverTick = false;
 			Skill->RegisterComponent();
-		
+
 			if (HasBegunPlay() && !Skill->HasBegunPlay())
 			{
 				Skill->RegisterComponentWithWorld(GetWorld());
@@ -52,7 +58,6 @@ void USkillManager::BeginPlay()
 		Skill_Instances.Add(Pair.Key, Skill);
 	}
 
-	
 }
 
 void USkillManager::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -74,7 +79,7 @@ void USkillManager::TickComponent(float DeltaTime, ELevelTick TickType, FActorCo
 
 void USkillManager::ProcessSkillCast(FGameplayTag Input, bool bShiftPressed)
 {
-	if (!OwnerCharacter || !OwnerAnimInstance) return;
+	if (!IsValid(OwnerCharacter) || !IsValid(OwnerAnimInstance)) return;
 
 	if (Input.MatchesTagExact(Tags::Input_A))
 	{
@@ -89,11 +94,10 @@ void USkillManager::ProcessSkillCast(FGameplayTag Input, bool bShiftPressed)
 	USkillBase* Skill = GetSkill(Input);
 	if (!Skill) return;
 
-	if (OwnerCharacter->GetStatusAttribute()->GetMP() < Skill->GetMPCost()) return;
-
-	if (OwnerCharacter->GetStatusAttribute()->GetHP() < Skill->GetHPCost()) return;
-
-	if (Skill->IsInCoolDown()) return;
+	if (OwnerCharacter->GetStatusAttribute()->GetMP() < Skill->GetMPCost() ||
+		OwnerCharacter->GetStatusAttribute()->GetHP() < Skill->GetHPCost() ||
+		Skill->IsInCoolDown()) 
+		return;
 
 	if (bShiftPressed)
 	{
@@ -105,8 +109,7 @@ void USkillManager::ProcessSkillCast(FGameplayTag Input, bool bShiftPressed)
 
 	for (auto Pair : Skill_Instances)
 	{
-		if (!Pair.Key.MatchesTagExact(Tags::Input_A) && Pair.Value->IsPreCasting())
-			return;
+		if (!Pair.Key.MatchesTagExact(Tags::Input_A) && Pair.Value->IsPreCasting()) return;
 	}
 
 	// ---------------------------------------------------------------------------
@@ -141,17 +144,16 @@ void USkillManager::ProcessSkillCast(FGameplayTag Input, bool bShiftPressed)
 
 	if (!OwnerCharacter->GetStateTags().HasTag(Tags::Exorcist_Casting) || IsCastings[Tags::Input_A])
 	{
-		if (IsCastings[Tags::Input_A]) { EndCast(Tags::Input_A); }
+		if (IsCastings[Tags::Input_A]) 
+			EndCast(Tags::Input_A);
 
 		OwnerCharacter->GetStateTags().RemoveTag(Tags::Exorcist_Idle);
 		OwnerCharacter->GetStateTags().AddTag(Tags::Exorcist_Casting);
 
 		CurrentInput = Input;
-		if (OwnerCharacter->GetExorcistController())
-		{
-			SetSkillCastLocation(OwnerCharacter->GetExorcistController()->GetIndicator()->GetActorLocation());
-		}
 
+		SetSkillCastLocation(OwnerCharacter->GetExorcistController()->GetIndicator()->GetActorLocation());
+		
 		GetSkill(Input)->StartCoolDown();
 
 		OwnerAnimInstance->Montage_Play(CastMontage, TargetPlayRate);
@@ -169,10 +171,8 @@ void USkillManager::ProcessSkillCast(FGameplayTag Input, bool bShiftPressed)
 				OwnerCharacter->GetStateTags().AddTag(Tags::Exorcist_Casting);
 
 				CurrentInput = Input;
-				if (OwnerCharacter->GetExorcistController())
-				{
-					SetSkillCastLocation(OwnerCharacter->GetExorcistController()->GetIndicator()->GetActorLocation());
-				}
+				
+				SetSkillCastLocation(OwnerCharacter->GetExorcistController()->GetIndicator()->GetActorLocation());
 
 				GetSkill(Input)->StartCoolDown();
 				OwnerAnimInstance->Montage_Play(CastMontage, TargetPlayRate);
@@ -187,24 +187,15 @@ void USkillManager::ProcessSkillRelease(FGameplayTag Input)
 {
 	if (!OwnerCharacter) return;
 
-	if (OwnerCharacter->GetExorcistController())
-	{
-		OwnerCharacter->GetExorcistController()->GetIndicator()->HideSkillRange();
-	}
+	OwnerCharacter->GetExorcistController()->GetIndicator()->HideSkillRange();
 	OwnerCharacter->SetShowSkillRange(false);
 
 	if (Input.MatchesTagExact(Tags::Input_A))
-	{
 		ExecuteAttack();
-	}
 	else if (CurrentAimingInput.MatchesTagExact(Input))
-	{
 		ProcessSkillCast(Input, false); // 조준 끝났으니 조준 플래그(false)로 즉시 시전 전환!
-	}
 	else if (CurrentAimingInput.IsValid())
-	{
 		ProcessSkillCast(CurrentAimingInput, false);
-	}
 
 	CurrentAimingInput = FGameplayTag::EmptyTag;
 }
@@ -212,18 +203,19 @@ void USkillManager::ProcessSkillRelease(FGameplayTag Input)
 void USkillManager::ExecuteAttack()
 {
 	// 기존 평타 로직을 매니저 소유 기반으로 그대로 이식
+	OwnerCharacter->GetExorcistController()->GetIndicator()->HideSkillRange();
 	OwnerCharacter->SetShowSkillRange(false);
-
-	if (OwnerCharacter->GetExorcistController())
-	{
-		OwnerCharacter->GetExorcistController()->GetIndicator()->HideSkillRange();
-	}
+	
 	CurrentAimingInput = FGameplayTag::EmptyTag;
 	CurrentInput = FGameplayTag::EmptyTag;
 
-	if (!OwnerCharacter->GetExorcistController()->GetLockedTarget()) return;
-	if (OwnerCharacter->GetStateTags().HasTag(Tags::Exorcist_Casting)) return;
-	if (OwnerCharacter->GetStatusAttribute()->GetDeBuffs().HasTag(Tags::Block)) return;
+	LastTarget = OwnerCharacter->GetExorcistController()->GetCurrentTarget();
+
+	if (!IsValid(LastTarget) ||
+		Cast<IDamageable>(LastTarget)->GetStatusAttribute()->IsDead() ||
+		OwnerCharacter->GetStateTags().HasTag(Tags::Exorcist_Casting) ||
+		OwnerCharacter->GetStatusAttribute()->GetDeBuffs().HasTag(Tags::Block)) 
+		return;
 
 	if (!OwnerAnimInstance->IsAnyMontagePlaying() && !IsCastings[Tags::Input_A])
 	{
@@ -237,37 +229,22 @@ void USkillManager::ExecuteAttack()
 	}
 }
 
-USkillBase* USkillManager::GetSkill(FGameplayTag Input)
-{
-	TObjectPtr<USkillBase>* SkillPtr = Skill_Instances.Find(Input);
-
-	return *SkillPtr;
-}
-
-bool USkillManager::IsSkillInCoolTime(FGameplayTag Input)
-{
-	return GetSkill(Input)->IsInCoolDown();
-}
-
-void USkillManager::TryCast(FGameplayTag Input)
-{
-	if (!Input.MatchesTagExact(Tags::Input_A))
-	{
-		if (GetSkill(Input))
-			GetSkill(Input)->CastSkill(NextSkillCastLocation);
-	}
-}
-
 void USkillManager::BeginCast(FGameplayTag Input)
 {
-	TryCast(Input);
-
 	IsCastings[Input] = true;
 
 	if (Input.MatchesTagExact(Tags::Input_A))
+	{
+		ProcessBasicAttack();
+		
 		return;
+	}
 
 	USkillBase* Skill = GetSkill(Input);
+
+	if (Skill)
+		Skill->CastSkill(NextSkillCastLocation);
+
 	if (Skill && OwnerAnimInstance && Skill->GetPostCastDelay() > 0.0f)
 	{
 		UAnimMontage* ActiveMontage = OwnerAnimInstance->GetCurrentActiveMontage();
@@ -309,8 +286,92 @@ void USkillManager::EndCast(FGameplayTag Input)
 
 	if (OwnerAnimInstance)
 	{
-		OwnerAnimInstance->Montage_Stop(0.01f);
+		OwnerAnimInstance->Montage_Stop(0.25f);
 	}
 
 	IsCastings[Input] = false;
+}
+
+void USkillManager::ProcessBasicAttack()
+{
+	if (BasicAttack_Class)
+	{
+		FActorSpawnParameters Params;
+		Params.Owner = OwnerCharacter;
+		Params.Instigator = OwnerCharacter;
+
+		if (!IsValid(LastTarget))
+			return;
+
+		FVector SpawnLocation = OwnerCharacter->GetActorLocation();
+
+		FVector LaunchDirection = (LastTarget->GetActorLocation() - SpawnLocation).GetSafeNormal();
+		FRotator SpawnRotation = LaunchDirection.Rotation();
+
+		ASkillProjectile* AttackProjectile = GetWorld()->SpawnActor<ASkillProjectile>(
+			BasicAttack_Class,
+			SpawnLocation,
+			SpawnRotation,
+			Params
+		);
+
+		FSkillDamageEvent DmgEvent;
+
+		DmgEvent.FinalDamage = OwnerCharacter->GetStatusAttribute()->GetFinalAttackDamage();
+		DmgEvent.PenetrationRate = OwnerCharacter->GetStatusAttribute()->GetPenetrationRate();
+
+		AttackProjectile->SetDamageEvent(DmgEvent);
+		AttackProjectile->SetTarget(LastTarget);
+	}
+}
+
+USkillBase* USkillManager::GetSkill(FGameplayTag Input)
+{
+	TObjectPtr<USkillBase>* SkillPtr = Skill_Instances.Find(Input);
+
+	if (SkillPtr)
+		return *SkillPtr;
+	else
+		return nullptr;
+}
+
+bool USkillManager::IsSkillInCoolTime(FGameplayTag Input)
+{
+	if (!GetSkill(Input))
+		return false;
+	else
+		return GetSkill(Input)->IsInCoolDown();
+}
+
+void USkillManager::PushSkill(TSubclassOf<USkillBase> NewSkill)
+{
+	if (!IsValid(NewSkill)) return;
+
+	for (auto Pair : IsEquiped)
+	{
+		if (Pair.Value)
+			continue;
+
+		UE_LOG(LogTemp, Warning, TEXT("[%s] Push : %s"), *Pair.Key.ToString(), *NewSkill->GetName());
+
+		Skill_Classes.Add(Pair.Key, NewSkill);
+
+		USkillBase* Skill = NewObject<USkillBase>(this, NewSkill);
+
+		if (Skill)
+		{
+			Skill->PrimaryComponentTick.bCanEverTick = false;
+			Skill->RegisterComponent();
+
+			if (HasBegunPlay() && !Skill->HasBegunPlay())
+			{
+				Skill->RegisterComponentWithWorld(GetWorld());
+			}
+		}
+
+		Pair.Value = true;
+		Skill_Instances.Add(Pair.Key, Skill);
+
+		return;
+	}
 }

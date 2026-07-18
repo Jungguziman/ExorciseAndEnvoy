@@ -78,6 +78,7 @@ void UHUDWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 	UpdateSkillSlot(Tags::Input_E, ProgressBar_Skill_E, TextBlock_Timer_E);
 	UpdateSkillSlot(Tags::Input_R, ProgressBar_Skill_R, TextBlock_Timer_R);
 }
+
 void UHUDWidget::UpdateSkillSlot(FGameplayTag SkillTag, UProgressBar* TargetProgressBar, UTextBlock* TargetTimerText)
 {
 	if (!CachedPlayerCharacter->GetSkillManager()) return;

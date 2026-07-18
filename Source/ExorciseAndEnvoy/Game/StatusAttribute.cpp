@@ -28,6 +28,8 @@ void UStatusAttribute::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+	if (IsDead())
+		return;
 
 	float NewHP = HP + HPRegen.GetFinalValue() * DeltaTime;
 	HP = FMath::Min(NewHP, MaxHP.GetFinalValue());
@@ -37,25 +39,24 @@ void UStatusAttribute::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 
 }
 
-void UStatusAttribute::ProcessApplyDamage(const FSkillDamageEvent& DmgEvent, UStatusAttribute* AttackerStatus)
+void UStatusAttribute::ProcessApplyDamage(const FSkillDamageEvent& DmgEvent)
 {
 	float CurrentHP = GetHP();
 	float MitigatedDamage = DmgEvent.FinalDamage;
 
 	// 포인터 방어벽 및 관통력 계산
-	if (AttackerStatus)
-	{
-		float DefenseReduction = GetFinalDefence() * (100.f - AttackerStatus->GetPenetrationRate()) / 100.f;
-		MitigatedDamage -= DefenseReduction;
-	}
-	else
-		MitigatedDamage -= GetFinalDefence();
+	
+	float DefenseReduction = GetFinalDefence() * (100.f - DmgEvent.PenetrationRate) / 100.f;
+	MitigatedDamage -= DefenseReduction;
 
 	// 마이너스 데미지 버그 차단
 	MitigatedDamage = FMath::Max(MitigatedDamage, 0.0f);
 
 	// 체력 반영
-	SetHP(FMath::Max(CurrentHP - MitigatedDamage, 0.0f));
+	SetHP(CurrentHP - MitigatedDamage);
+
+	if (HP < 1.f)
+		HP = 0.f;
 
 	// 최적화 디버프 루프
 	for (const FActiveEffect& Debuff : DmgEvent.Debuffs)
@@ -80,7 +81,6 @@ void UStatusAttribute::ApplyActiveEffect(FGameplayTag EffectTag, float Duration,
 	});
 
 	GetWorld()->GetTimerManager().SetTimer(Effect.TimerHandle, TimerDelegate, Duration, false);
-
 
 	if (EffectTag.MatchesTagExact(Tags::Debuff_Fear) ||
 		EffectTag.MatchesTagExact(Tags::Debuff_Knockback) ||

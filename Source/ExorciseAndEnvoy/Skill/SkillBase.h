@@ -13,7 +13,7 @@ class ASkillProjectile;
 class USkillDamageType;
 class AExorcist;
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS( Blueprintable, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class EXORCISEANDENVOY_API USkillBase : public UActorComponent
 {
 	GENERATED_BODY()

@@ -34,7 +34,7 @@ public:
 
 	ATargetIndicator* GetIndicator() { return Indicator_Instance; }
 
-	AActor* GetLockedTarget() { return Indicator_Instance->GetCurrentTarget(); }
+	AActor* GetCurrentTarget() { return Indicator_Instance->GetCurrentTarget(); }
 
 	void ShowSkillRange(USkillBase* Skill);
 	void HideSkillRange();
@@ -43,19 +43,11 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attach|InputAction")
 	TObjectPtr<UInputAction> CursorBindAction;
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Debug")
-	bool bCursorBind = false;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	TSubclassOf<ATargetIndicator> Indicator_Class;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	TSubclassOf<UHUDWidget> HUD_Class;
-
-	UPROPERTY()
-	FVector CharacterOldPos;
-	UPROPERTY()
-	FVector CharacterCurPos;
 
 private:
 	UPROPERTY()

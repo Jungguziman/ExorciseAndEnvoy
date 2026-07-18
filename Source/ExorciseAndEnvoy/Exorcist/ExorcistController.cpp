@@ -10,7 +10,7 @@
 
 void AExorcistController::BeginPlay()
 {
-	bShowMouseCursor = false;
+	bShowMouseCursor = true;
 	bEnableClickEvents = true;
 	bEnableMouseOverEvents = true;
 
@@ -35,7 +35,6 @@ void AExorcistController::BeginPlay()
 		}
 	}
 
-	CharacterOldPos = FVector(0.0f, 0.f, 0.f);
 }
 
 void AExorcistController::SetupInputComponent()
@@ -57,7 +56,6 @@ void AExorcistController::SetupInputComponent()
 
 	EnhancedInputComponent->BindActionInstanceLambda(CursorBindAction, ETriggerEvent::Completed, [this](const FInputActionInstance& I)
 	{
-		bCursorBind = bCursorBind ? false : true;
 		Indicator_Instance->ToggleCursorLock();
 	});
 }

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "AnimCallback.h"
 #include "Damageable.h"
 
 #include "Dummy.generated.h"
@@ -11,10 +12,12 @@
 class UCapsuleComponent;
 class USkeletalMeshComponent;
 class UStatusAttribute;
-
+class UWidgetComponent;
+class UEnemyStatusWidget;
+class UAnimInstanceBase_Enemy;
 
 UCLASS()
-class EXORCISEANDENVOY_API ADummy : public AActor, public IDamageable
+class EXORCISEANDENVOY_API ADummy : public AActor, public IAnimCallback, public IDamageable
 {
 	GENERATED_BODY()
 	
@@ -30,8 +33,14 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	virtual void ApplyDamage(const FSkillDamageEvent& DmgEvent, UStatusAttribute* AttackerStatus);
+	virtual void ApplyDamage(const FSkillDamageEvent& DmgEvent);
 	virtual UStatusAttribute* GetStatusAttribute() override { return StatusAttribute; }
+
+public:
+	virtual void BeginCast(FGameplayTag Input) override;
+	virtual void EndCast(FGameplayTag Input) override;
+
+	virtual void GetMovementAnimData(float& OutSpeed, float& OutDirection, bool& OutIsDead) override;
 
 protected:
 
@@ -41,7 +50,25 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Status")
 	TObjectPtr<USkeletalMeshComponent> SkeletalMesh;
 
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Status")
+	TObjectPtr<UWidgetComponent> WidgetComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widget")
+	TObjectPtr<UEnemyStatusWidget> StatusWidget;
+
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Status")
 	TObjectPtr<UStatusAttribute> StatusAttribute;
 
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Animation")
+	TObjectPtr<UAnimInstanceBase_Enemy> AnimInstance;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+	TObjectPtr<UAnimMontage> DeathMontage;
+
+
+	UPROPERTY()
+	bool IsDead = false;
 };
